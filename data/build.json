@@ -1,11 +1,11 @@
 {
- "built_at": "2026-10-05T18:49:49-04:00",
+ "built_at": "2026-10-05T19:20:31-04:00",
  "counts": {
   "real": 196,
   "sample": 38,
   "retailers": 10,
   "stores": 23,
-  "flyers": 10
+  "flyers": 11
  },
- "source_commit": "9d31aaf"
+ "source_commit": "b315156"
 }

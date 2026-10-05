@@ -372,14 +372,16 @@
     : f.link_status === "stale" ? t("flyerStale") : f.link_status === "unverified" ? t("flyerUnverified") : "");
 
   // 海报标题是台账里的中文；其他语言用通用说明
-  const flyerTitle = (f) => (state.lang === "zh" ? f.title : t("flyerOfficialTitle", retailerName(f.retailer) || ""));
+  const flyerTitle = (f) => (state.lang === "zh" ? f.title
+    : f.region === "GTA" && f.start ? t("flyerGtaTitle", retailerName(f.retailer) || "", `${fmtDay(f.start)} – ${fmtDay(f.end)}`)
+    : t("flyerOfficialTitle", retailerName(f.retailer) || ""));
 
   function flyerCard(f) {
     const status = f.time_status === "link_only" ? t("flyerLink") : f.time_status === "current" ? t("flyerCurrent") : t("upcoming");
     return `<div class="card">
       <div class="row between"><h3 class="grow">${esc(retailerName(f.retailer))}</h3><span class="tag neutral">${status}</span></div>
       <p class="small muted">${esc(flyerTitle(f))}</p>
-      <p class="small">${t("flyerScope")}${t("colon")}${esc(f.store_ids.length ? f.store_ids.join(", ") : (f.per_store_note || f.region || "—"))}</p>
+      <p class="small">${t("flyerScope")}${t("colon")}${esc(f.store_ids.length ? f.store_ids.join(", ") : f.region === "GTA" && state.lang !== "zh" ? t("scope_gta_edition") : (f.per_store_note || f.region || "—"))}</p>
       ${f.status_note ? `<p class="small ${f.link_status === "verified" ? "muted" : ""}" ${f.link_status === "verified" ? "" : 'style="color:var(--warn)"'}>${f.link_status === "stale" ? "⚠ " : f.link_status === "unverified" ? "ⓘ " : ""}${esc(flyerNote(f))}</p>` : ""}
       ${f.reproduction_allowed ? "" : `<p class="small muted">${t("linkOnlyNote")}</p>`}
       <a class="btn secondary small" href="${esc(f.official_url)}" target="_blank" rel="noopener" data-track="view_source">${t("officialPage")} ↗</a>
