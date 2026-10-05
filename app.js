@@ -442,8 +442,27 @@
     const nxt = await api("/api/flyers?" + qs({ store_id: sid, retailer_id: rid, status: "upcoming" }));
     const upcoming = nxt.flyers.filter((f) => f.time_status === "upcoming");
     const grid = (fs) => `<div class="sgrid">${fs.map(flyerCard).join("")}</div>`;
-    $("#fb").outerHTML = `${cycleTable(rid)}<h2>${t("currentFlyers")}</h2>${curFlyers.flyers.length ? grid(curFlyers.flyers) : `<p class="empty">—</p>`}
+    const home = rid ? null : await api("/api/home").catch(() => null);
+    $("#fb").outerHTML = `${home ? updatePanel(home.covers) : ""}${cycleTable(rid)}<h2>${t("currentFlyers")}</h2>${curFlyers.flyers.length ? grid(curFlyers.flyers) : `<p class="empty">—</p>`}
       ${upcoming.length ? `<h2>${t("upcomingFlyers")}</h2>${grid(upcoming)}` : ""}`;
+  }
+
+  // 每周更新：哪些商家是人工录入的真实优惠、本期到哪天、下期什么时候换
+  function updatePanel(covers) {
+    const real = covers.filter((c) => state.meta.retailers.find((r) => r.id === c.retailer.id)?.offer_data === "real");
+    const today = torontoToday();
+    const rows = real.map((c) => {
+      const cy = cycleOf(c.retailer.id);
+      const to = c.days_left != null ? addDays(today, c.days_left) : null;
+      return `<li><span class="cyhead"><a href="#/r/${encodeURIComponent(c.retailer.id)}"><strong>${esc(retailerName(c.retailer))}</strong></a>
+          <span class="tag good">${t("offersCount", c.offer_count)}</span></span>
+        <span class="small">${to ? t("updValidTo", fmtDay(to)) : ""}${cy?.next ? " · " + t("updNext", fmtDay(cy.next)) : ""}</span>
+        ${cy?.c.scope ? `<span class="small muted">📍 ${t("scope_" + cy.c.scope)}</span>` : ""}</li>`;
+    }).join("");
+    const built = STATIC?.build || state.meta.built_at;
+    return `<section class="cycles"><h2>${t("updTitle")}</h2>
+      <p class="small muted">${built ? t("updLast", fmtDate(built)) + " " : ""}${t("updHow")}</p>
+      ${rows ? `<ul class="cyclist">${rows}</ul>` : `<p class="small muted">${t("updNone")}</p>`}</section>`;
   }
 
   function cycleTable(onlyRid) {
@@ -452,7 +471,8 @@
     const rows = rs.map((r) => ({ r, cy: cycleOf(r.id) })).sort((a, b) => (!a.cy - !b.cy) || ((a.cy?.next || "~") < (b.cy?.next || "~") ? -1 : 1));
     return `<section class="cycles"><h2>${t("cycleTitle")}</h2><p class="small muted">${t("cycleHint")}</p>
       <ul class="cyclist">${rows.map(({ r, cy }) => `<li><span class="cyhead"><a href="#/r/${encodeURIComponent(r.id)}"><strong>${esc(retailerName(r))}</strong></a>${cycleTag(cy)}</span>
-        <span class="small">${esc(cycleText(cy))}${cy?.next ? `<span class="muted"> · ${t("nextStarts", fmtDay(cy.next))}</span>` : ""}</span></li>`).join("")}</ul></section>`;
+        <span class="small">${esc(cycleText(cy))}${cy?.next ? `<span class="muted"> · ${t("nextStarts", fmtDay(cy.next))}</span>` : ""}</span>
+        ${cy?.c.scope ? `<span class="small muted">📍 ${t("scope_" + cy.c.scope)}</span>` : ""}</li>`).join("")}</ul></section>`;
   }
 
   // ---------- 页面：搜索（排序 chips → 商店行 → 优惠网格） ----------

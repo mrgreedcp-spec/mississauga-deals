@@ -1,6 +1,10 @@
 // 界面文案（中 / 英 / 法）。商品原名始终保留商家原文。
 window.I18N = {
   zh: {
+    updTitle: "每周更新", updLast: (d) => `上次更新：${d}。`, updHow: "下列商家由人工对照官方海报每周录入，新一期海报出来后更新；网站每天晚上自动发布。其余商家目前只提供官方海报链接或示例数据。",
+    updValidTo: (d) => `本期有效至 ${d}`, updNext: (d) => `下期 ${d} 开始，录入后更新`, updNone: "目前没有人工录入的商家。",
+    scope_gta_edition: "大多伦多地区（GTA）各店同一版海报；渥太华、滑铁卢等地是另一版，价格不同。",
+    scope_ontario_wide: "安省各地同一份主传单；各店库存可能不同。",
     cycleTitle: "各超市每周优惠时间", cycleHint: "按每家固定的换期日推算本期和下期；节假日可能提前或顺延。标「未核实」的以官网为准。",
     cycleWeekly: (a, b) => `每${a}开始，${b}结束`, cycleIrregular: "不按周换期，日期以官网为准", cycleUnknown: "暂无资料，以官网为准",
     cycleVerified: "已核实", cycleSecondary: "第三方来源", cycleUnverified: "未核实", thisPeriod: "本期", nextStarts: (d) => `下期 ${d} 开始`,
@@ -95,6 +99,10 @@ window.I18N = {
       costco_warehouse: "Costco 仓库", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   en: {
+    updTitle: "Weekly updates", updLast: (d) => `Last updated ${d.replace(/\.$/, "")}.`, updHow: "The stores below are entered by hand from the official flyer each week and updated when the new flyer comes out; the site republishes automatically every evening. Other stores have official flyer links or sample data only.",
+    updValidTo: (d) => `current flyer valid until ${d}`, updNext: (d) => `next starts ${d}, updated once entered`, updNone: "No stores are entered by hand yet.",
+    scope_gta_edition: "Same flyer at all Greater Toronto Area stores; Ottawa, Waterloo and other areas get a different edition with different prices.",
+    scope_ontario_wide: "Same main flyer across Ontario; stock may vary by store.",
     cycleTitle: "Weekly deal days by store", cycleHint: "Current and next periods are worked out from each store's usual changeover day; holidays can shift them. Check the official site for stores marked unverified.",
     cycleWeekly: (a, b) => `Weekly, ${a} to ${b}`, cycleIrregular: "Not weekly; check the official site for dates", cycleUnknown: "No information yet; check the official site",
     cycleVerified: "Verified", cycleSecondary: "Third-party source", cycleUnverified: "Unverified", thisPeriod: "This period", nextStarts: (d) => `next starts ${d}`,
@@ -110,7 +118,7 @@ window.I18N = {
     skipLink: "Skip to main content", mainNav: "Main navigation",
     carouselPrev: "Scroll left", reportIssueBody: "Please say what is wrong (price / dates / size / conditions / store), ideally with the flyer page.",
     reportIssueHint: "Opens a GitHub Issue in this site's public repository (GitHub account needed). It is public, so do not include personal information.",
-    dataUpdated: (d) => `Data updated ${d}.`, flyerOfficialTitle: (r) => `${r} — this week's flyer (official link)`, carouselNext: "Scroll right", multiShortQty: (n) => `${n} for`,
+    dataUpdated: (d) => `Data updated ${d.replace(/\.$/, "")}.`, flyerOfficialTitle: (r) => `${r} — this week's flyer (official link)`, carouselNext: "Scroll right", multiShortQty: (n) => `${n} for`,
     addToListNamed: (name) => `Add "${name}" to list`, chooseStoreFirst: "This deal applies to several stores — choose one first",
     bannerMixedNamed: (names) => `SAMPLE data (made-up prices) for: ${names}. Other retailers: entered by hand each week from official flyers and reviewed — the retailer's flyer is authoritative.`,
     lparen: " (", rparen: ")",
@@ -187,6 +195,10 @@ window.I18N = {
       costco_warehouse: "Costco warehouse", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   fr: {
+    updTitle: "Mises à jour hebdomadaires", updLast: (d) => `Dernière mise à jour : ${d}.`, updHow: "Les magasins ci-dessous sont saisis à la main chaque semaine à partir de la circulaire officielle et mis à jour à la sortie de la nouvelle circulaire; le site est republié automatiquement chaque soir. Les autres magasins n'ont qu'un lien vers la circulaire officielle ou des données d'exemple.",
+    updValidTo: (d) => `circulaire en cours valide jusqu'au ${d}`, updNext: (d) => `prochaine dès le ${d}, mise à jour une fois saisie`, updNone: "Aucun magasin n'est encore saisi à la main.",
+    scope_gta_edition: "Même circulaire dans tous les magasins de la région du Grand Toronto; Ottawa, Waterloo et d'autres régions ont une édition différente, avec des prix différents.",
+    scope_ontario_wide: "Même circulaire principale partout en Ontario; les stocks peuvent varier selon le magasin.",
     cycleTitle: "Jours des aubaines par magasin", cycleHint: "La période en cours et la suivante sont calculées à partir du jour de changement habituel de chaque magasin; les jours fériés peuvent les décaler. Pour les magasins non vérifiés, consultez le site officiel.",
     cycleWeekly: (a, b) => `Chaque semaine, du ${a} au ${b}`, cycleIrregular: "Pas hebdomadaire; consultez le site officiel", cycleUnknown: "Pas encore d'information; consultez le site officiel",
     cycleVerified: "Vérifié", cycleSecondary: "Source tierce", cycleUnverified: "Non vérifié", thisPeriod: "Période en cours", nextStarts: (d) => `prochaine dès le ${d}`,
