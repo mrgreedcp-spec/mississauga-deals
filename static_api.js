@@ -228,6 +228,7 @@
       const upcoming = offers.filter((o) => o._time_status === "upcoming");
       const order = Object.fromEntries(B.aliases.map((a, n) => [a.category, n]));
       current.sort((a, b) => (order[a.category] ?? 99) - (order[b.category] ?? 99) || cmp(a.name_original, b.name_original));
+      upcoming.sort((a, b) => cmp(a.start || "", b.start || "") || (order[a.category] ?? 99) - (order[b.category] ?? 99) || cmp(a.name_original, b.name_original));
       const pages = [];
       for (let i = 0; i < current.length; i += B.flyer_page_size) pages.push(current.slice(i, i + B.flyer_page_size));
       const last = latest(current);
@@ -240,12 +241,12 @@
       const starts = current.map((o) => o.start).filter(Boolean).sort(cmp);
       return { retailer: r, pages, offer_count: current.length, valid_from: starts[0] || null,
         valid_to: last ? last._end_resolved : null, days_left: last ? C.daysBetween(c.today, last._end_date) : null,
-        upcoming_count: upcoming.length, stores: listStores({ ...p, retailer: rid }, c), next,
+        upcoming_count: upcoming.length, upcoming, stores: listStores({ ...p, retailer: rid }, c), next,
         official_flyers: listFlyers({ retailer_id: rid }, c).flyers };
     }
     function meta(c) {
       return { now: new Date(c.nowMs).toISOString(), timezone: B.timezone, channels: B.channels, radii: B.radii, fsa: B.fsa,
-        retailers: withMode(c), data_mode: overallMode(c), built_at: B.built_at,
+        retailers: withMode(c), data_mode: overallMode(c), built_at: B.built_at, flyer_cycles: B.flyer_cycles || {},
         categories: B.aliases.map((a) => ({ category: a.category, zh: a.zh[0], en: a.en[0], fr: (a.fr || a.en)[0] })) };
     }
 

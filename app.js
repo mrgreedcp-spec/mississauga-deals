@@ -8,6 +8,7 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* 忽略 */ } },
   };
   const LIST_KEY = "mgd.list.v1";
+  const WANT_KEY = "mgd.wants.v1"; // 想买清单：先记下商品名，有优惠时自动列出
   const state = {
     lang: ["zh", "en", "fr"].includes(store.get("mgd.lang", "zh")) ? store.get("mgd.lang", "zh") : "zh", // 默认中文；顶部可选中文/English/Français
     loc: store.get("mgd.loc", null), // {mode:'fsa', postal} | {mode:'geo', lat, lng} | {mode:'city'}
@@ -66,6 +67,32 @@
     return d.toLocaleString(LOCALE[state.lang], { timeZone: "America/Toronto", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
   };
   const fmtDay = (s) => (s ? new Date(s.length === 10 ? s + "T12:00:00" : s).toLocaleDateString(LOCALE[state.lang], { timeZone: "America/Toronto", month: "short", day: "numeric", weekday: "short" }) : "—");
+  // ---------- 每周优惠周期（按换期日推算本期/下期；节假日可能提前或顺延） ----------
+  const torontoToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date());
+  const addDays = (iso, n) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+  const pyWeekday = (iso) => (new Date(iso + "T12:00:00Z").getUTCDay() + 6) % 7; // 0=周一，与后端一致
+  const wdName = (wd) => new Date(Date.UTC(2026, 0, 5 + wd, 12)).toLocaleDateString(LOCALE[state.lang], { timeZone: "UTC", weekday: state.lang === "zh" ? "short" : "long" }); // 2026-01-05 是周一
+  function cycleOf(rid) {
+    const c = state.meta?.flyer_cycles?.[rid];
+    if (!c || c.type !== "weekly") return c ? { c } : null;
+    const today = torontoToday();
+    const from = addDays(today, -((pyWeekday(today) - c.start_weekday + 7) % 7));
+    return { c, from, to: addDays(from, c.period_days - 1), next: addDays(from, c.period_days) };
+  }
+  function cycleText(cy) {
+    if (!cy) return t("cycleUnknown");
+    if (cy.c.type !== "weekly") return state.lang === "zh" && cy.c.note ? cy.c.note : t("cycleIrregular");
+    return t("cycleWeekly", wdName(cy.c.start_weekday), wdName((cy.c.start_weekday + cy.c.period_days - 1) % 7));
+  }
+  const cycleTag = (cy) => (!cy ? "" : cy.c.confidence === "verified" ? `<span class="tag good">${t("cycleVerified")}</span>`
+    : `<span class="tag neutral">${t(cy.c.confidence === "secondary" ? "cycleSecondary" : "cycleUnverified")}</span>`);
+  // 商家页用的一行：每周五开始、周四结束 · 下期 10月9日 开始
+  function cycleLine(rid) {
+    const cy = cycleOf(rid);
+    if (!cy) return "";
+    return `<p class="small cycline">🗓 ${esc(cycleText(cy))}${cy.next ? " · " + t("nextStarts", fmtDay(cy.next)) : ""} ${cycleTag(cy)}</p>`;
+  }
+
   const offerName = (o) => (state.lang === "zh" ? o.name_zh || o.name_original : o.name_original);
   const sizeText = (o) => {
     if (o.price_basis === "per_lb") return t("perLb");
@@ -309,12 +336,19 @@
       const isSample = d.pages.some((pg) => pg.some((o) => o.is_sample));
       flyer = `<div class="tags">${isSample ? `<span class="tag sample">${t("catalog")}</span>` : `<span class="tag good">${t("catalogReal")}</span>`}<span class="tag ${d.days_left <= 1 ? "bad" : "neutral"}">${expiryLabel(d.days_left, d.valid_to)}</span></div>
         <p class="small muted">${t("validRange")}${t("colon")}${fmtDay(d.valid_from)} – ${fmtDay(d.valid_to)} · ${t(isSample ? "sampleOffers" : "offersCount", d.offer_count)}${d.upcoming_count ? " · " + t("upcomingCount", d.upcoming_count) : ""}</p>
+        ${cycleLine(r.id)}
         ${tabs}
         <div class="flyerpage" aria-label="${pageN}">${page.map(offerTile).join("")}</div>
         ${nav}${end}
         <p class="small muted">${t("digitalFlyerNote")}${d.pages.some((pg) => pg.some((o) => o.is_sample)) ? t("allSampleNote") : t("manualNote")}</p>`;
     } else {
-      flyer = `<div class="notice">${t("noDigitalFlyer")}</div>`;
+      flyer = `${cycleLine(r.id)}<div class="notice">${t("noDigitalFlyer")}</div>`;
+    }
+    // 下期预告：已录入但还没开始的优惠，可以提前加入清单
+    if (d.upcoming_count) {
+      const items = d.upcoming || [];
+      if (items.length) flyer += section(t("upcomingTitle", items.length), `<p class="small muted">${t("upcomingHint")}</p><div class="ogrid">${items.map(offerTile).join("")}</div>`,
+        "#/search?" + qs({ retailer: r.id, up: 1 }));
     }
     const official = d.official_flyers.map((f) => `<a class="btn secondary block" href="${esc(f.official_url)}" target="_blank" rel="noopener" data-track="view_source">${t("officialFlyerBtn")}${f.store_ids.length ? " · " + esc(flyerTitle(f)) : ""} ↗</a>
       ${f.status_note && f.link_status !== "verified" ? `<p class="small" style="color:var(--warn)">⚠ ${esc(flyerNote(f))}</p>` : ""}`).join("");
@@ -408,8 +442,17 @@
     const nxt = await api("/api/flyers?" + qs({ store_id: sid, retailer_id: rid, status: "upcoming" }));
     const upcoming = nxt.flyers.filter((f) => f.time_status === "upcoming");
     const grid = (fs) => `<div class="sgrid">${fs.map(flyerCard).join("")}</div>`;
-    $("#fb").outerHTML = `<h2>${t("currentFlyers")}</h2>${curFlyers.flyers.length ? grid(curFlyers.flyers) : `<p class="empty">—</p>`}
+    $("#fb").outerHTML = `${cycleTable(rid)}<h2>${t("currentFlyers")}</h2>${curFlyers.flyers.length ? grid(curFlyers.flyers) : `<p class="empty">—</p>`}
       ${upcoming.length ? `<h2>${t("upcomingFlyers")}</h2>${grid(upcoming)}` : ""}`;
+  }
+
+  function cycleTable(onlyRid) {
+    const rs = state.meta.retailers.filter((r) => !onlyRid || r.id === onlyRid);
+    // 有资料的排前面，再按下期开始日
+    const rows = rs.map((r) => ({ r, cy: cycleOf(r.id) })).sort((a, b) => (!a.cy - !b.cy) || ((a.cy?.next || "~") < (b.cy?.next || "~") ? -1 : 1));
+    return `<section class="cycles"><h2>${t("cycleTitle")}</h2><p class="small muted">${t("cycleHint")}</p>
+      <ul class="cyclist">${rows.map(({ r, cy }) => `<li><span class="cyhead"><a href="#/r/${encodeURIComponent(r.id)}"><strong>${esc(retailerName(r))}</strong></a>${cycleTag(cy)}</span>
+        <span class="small">${esc(cycleText(cy))}${cy?.next ? `<span class="muted"> · ${t("nextStarts", fmtDay(cy.next))}</span>` : ""}</span></li>`).join("")}</ul></section>`;
   }
 
   // ---------- 页面：搜索（排序 chips → 商店行 → 优惠网格） ----------
@@ -420,7 +463,7 @@
     const meta = state.meta;
     const sorts = [["relevance", t("sortBest")], ["price", t("sortPrice")], ["unit_price", t("sortUnit")]];
     if (state.loc && state.loc.mode !== "city") sorts.push(["distance", t("sortDistance")]);
-    const nFilters = [p.retailer, p.channel, prefs.member, prefs.coupon].filter(Boolean).length; // 已生效的筛选数
+    const nFilters = [p.retailer, p.channel, prefs.member, prefs.coupon, p.up].filter(Boolean).length; // 已生效的筛选数
     main.innerHTML = `<form id="sForm" class="stack" role="search">
         <div class="searchbar"><input type="search" name="q" value="${esc(p.q || "")}" placeholder="${esc(t("searchPlaceholder"))}" aria-label="${esc(t("search"))}">
           <button class="btn" type="submit">${t("search")}</button></div>
@@ -438,6 +481,7 @@
               ${Object.keys(meta.channels).map((c) => `<option value="${c}">${esc(chName(c))}</option>`).join("")}</select></div>
             <label class="check"><input type="checkbox" name="member" ${prefs.member ? "checked" : ""}> ${t("member")}</label>
             <label class="check"><input type="checkbox" name="coupon" ${prefs.coupon ? "checked" : ""}> ${t("coupon")}</label>
+            <label class="check"><input type="checkbox" name="up" ${p.up ? "checked" : ""}> ${t("includeUpcoming")}</label>
           </div>
         </details>
       </form>
@@ -447,24 +491,24 @@
     const submit = () => {
       const fd = new FormData(f);
       store.set("mgd.prefs", { member: !!fd.get("member"), coupon: !!fd.get("coupon") });
-      location.hash = "#/search?" + qs({ q: fd.get("q").trim(), sort: p.sort, retailer: fd.get("retailer"), channel: fd.get("channel"), store_ids: p.store_ids });
+      location.hash = "#/search?" + qs({ q: fd.get("q").trim(), sort: p.sort, retailer: fd.get("retailer"), channel: fd.get("channel"), store_ids: p.store_ids, up: fd.get("up") ? 1 : "" });
     };
     f.addEventListener("submit", (e) => { e.preventDefault(); submit(); });
     f.querySelectorAll("select, input[type=checkbox]").forEach((el) => el.addEventListener("change", submit));
 
     const data = await api("/api/offers?" + qs({
       q: p.q, sort: p.sort, retailer: p.retailer, channel: p.channel, store_ids: p.store_ids,
-      member: prefs.member ? 1 : "", coupon: prefs.coupon ? 1 : "", page: p.page, ...locParams(),
+      member: prefs.member ? 1 : "", coupon: prefs.coupon ? 1 : "", page: p.page, include_upcoming: p.up ? 1 : "", ...locParams(),
     }));
     let html = "";
-    if (p.q) html += `<h1>${t("dealsFor", esc(p.q))}</h1>`;
+    if (p.q) html += `<div class="row between"><h1>${t("dealsFor", esc(p.q))}</h1>${wantBtn(p.q)}</div>`;
     if (p.store_ids) html += `<div class="notice">${t("onlyStore")}${t("colon")}${esc(p.store_ids)} · <a href="#/search?${qs({ q: p.q })}">${t("clear")}</a></div>`;
     if (data.retailers.length) html += section(t("storesRow"), carousel(data.retailers.map((r) => retailerTile(r)).join(""), t("storesRow")));
     if (data.categories_matched.length) html += `<p class="small muted">${t("category")}${t("colon")}${esc(data.categories_matched.map(catName).join(t("listSep")))}</p>`;
     if (p.sort === "unit_price") html += `<div class="notice small">${t("sameProductNote")}</div>`;
     html += `<div class="sec-h"><h2>${t("offersRow")}</h2><span class="small muted">${data.total} ${t("results")}</span></div>`;
     if (data.empty_message) {
-      html += `<div class="card empty"><p>${t("emptyMsg")}</p><a class="btn secondary" href="#/flyers">${t("checkFlyers")}</a></div>`;
+      html += `<div class="card empty"><p>${t("emptyMsg")}</p>${p.q ? `<p class="small">${t("wantEmptyHint")}</p>` : ""}<a class="btn secondary" href="#/flyers">${t("checkFlyers")}</a></div>`;
     }
     if (p.sort === "unit_price") {
       // 按渠道分段：不同渠道的价格不混在一个排名里
@@ -579,7 +623,7 @@
       retailer: o._retailer, qty: startQty, added_at: new Date().toISOString(), done: false,
       // 价格快照：加入时的价格与条件，之后不悄悄修改
       snap: { name_zh: o.name_zh, name_original: o.name_original, price: o.price, price_basis: o.price_basis,
-        multi_buy: o.multi_buy, size: sizeText(o), end: o.end, channel: o.channel, conditions: o.conditions, is_sample: o.is_sample },
+        multi_buy: o.multi_buy, size: sizeText(o), start: o.start, end: o.end, channel: o.channel, conditions: o.conditions, is_sample: o.is_sample },
     });
     setList(list); track("add_to_list"); toast(t("added"));
   }
@@ -597,12 +641,52 @@
 
   async function pageList() {
     const list = getList();
-    main.innerHTML = `<h1>${t("listTitle")}</h1><div class="notice small">${t("listLocal")}</div><div id="lb"></div>`;
+    main.innerHTML = `<h1>${t("listTitle")}</h1><div class="notice small">${t("listLocal")}</div>
+      <section class="wants"><h2>${t("wantsTitle")}</h2><p class="small muted">${t("wantsHint")}</p>
+        <form id="wantForm" class="searchbar"><input id="wantQ" type="text" maxlength="40" placeholder="${esc(t("wantsPlaceholder"))}" aria-label="${esc(t("wantsTitle"))}">
+          <button class="btn" type="submit">${t("wantsAdd")}</button></form>
+        <div id="wl"></div></section>
+      <h2>${t("listItemsTitle")}</h2><div id="lb"></div>`;
+    $("#wantForm").addEventListener("submit", (e) => { e.preventDefault(); if (addWant($("#wantQ").value)) pageList(); });
+    await renderWants();
     if (!list.length) { $("#lb").innerHTML = `<p class="empty">${t("listEmpty")}</p>`; return; }
     $("#lb").innerHTML = `<p class="spinner">${t("checking")}</p>`;
     let status = {};
     try { status = (await api("/api/offers/batch?ids=" + list.map((i) => i.offer_id).join(","))).items; } catch { /* 离线时只显示快照 */ }
     renderList(list, status);
+  }
+
+  // ---------- 想买清单（本机）：只存商品名，每次打开时按本期 + 下期预告重新搜索 ----------
+  const getWants = () => store.get(WANT_KEY, []);
+  const hasWant = (q) => getWants().some((w) => w.q.toLowerCase() === q.trim().toLowerCase());
+  function addWant(q) {
+    q = (q || "").trim().slice(0, 40);
+    if (!q || hasWant(q)) return false;
+    store.set(WANT_KEY, [...getWants(), { q, added_at: new Date().toISOString() }]);
+    toast(t("wantAdded", q));
+    return true;
+  }
+  const wantBtn = (q) => `<button class="btn ghost small" type="button" data-want="${esc(q)}" ${hasWant(q) ? "disabled" : ""}>${hasWant(q) ? "✓ " + t("wantIn") : "☆ " + t("wantAddBtn")}</button>`;
+  async function renderWants() {
+    const wants = getWants();
+    const box = $("#wl");
+    if (!wants.length) { box.innerHTML = ""; return; }
+    const results = await Promise.all(wants.map((w) => api("/api/offers?" + qs({ q: w.q, include_upcoming: 1, ...locParams() })).catch(() => null)));
+    box.innerHTML = wants.map((w, i) => {
+      const r = results[i];
+      const items = r ? r.items : [];
+      const nCur = items.filter((o) => o._time_status !== "upcoming").length, nUp = items.length - nCur;
+      const sum = !r ? t("error") : items.length ? t("wantMatches", nCur, nUp) : t("wantNone");
+      return `<div class="card want" data-wq="${esc(w.q)}">
+        <div class="row between"><strong class="grow">${esc(w.q)}</strong>
+          ${items.length ? `<a class="small" href="#/search?${qs({ q: w.q, up: 1 })}">${t("seeAll")} ›</a>` : ""}
+          <button class="btn ghost small" type="button" data-unwant="${esc(w.q)}" aria-label="${esc(t("remove"))} ${esc(w.q)}">×</button></div>
+        <p class="small muted">${esc(sum)}</p>
+        ${items.length ? carousel(items.slice(0, 8).map(offerTile).join(""), w.q) : ""}</div>`;
+    }).join("");
+    box.querySelectorAll("[data-unwant]").forEach((b) => b.addEventListener("click", () => {
+      store.set(WANT_KEY, getWants().filter((w) => w.q !== b.dataset.unwant)); pageList().then(syncCarousels);
+    }));
   }
 
   function renderList(list, status) {
@@ -617,6 +701,7 @@
         if (st) {
           if (st.status === "taken_down" || st.status === "missing") flag = `<span class="tag bad">${t("statusRemoved")}</span>`;
           else if (st.time_status === "ended") flag = `<span class="tag bad">${t("statusExpired")}</span>`;
+          else if (st.time_status === "upcoming") flag = `<span class="tag neutral">${t("statusUpcoming", fmtDay(s.start))}</span>`;
           else if (st.price !== s.price || JSON.stringify(st.multi_buy || null) !== JSON.stringify(s.multi_buy || null)) {
             const now = st.multi_buy ? t("multiNeed", st.multi_buy.qty, money(st.multi_buy.total)) : `${cur(st.price)}`;
             flag = `<span class="tag bad">${t("statusChanged")}${t("colon")}${esc(now)}</span>`;
@@ -715,6 +800,8 @@
       c.scrollBy({ left: (cb.classList.contains("next") ? 1 : -1) * c.clientWidth * 0.8, behavior: "smooth" });
       setTimeout(() => syncCarousel(cb.closest(".carousel-wrap")), 600); // 兜底：个别浏览器平滑滚动结束不一定再触发 scroll
     }
+    const wb = e.target.closest("[data-want]");
+    if (wb && addWant(wb.dataset.want)) { wb.disabled = true; wb.textContent = "✓ " + t("wantIn"); }
     const add = e.target.closest("[data-add]");
     if (add) {
       const o = tileCache.get(add.dataset.add);
