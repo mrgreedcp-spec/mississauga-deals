@@ -821,6 +821,7 @@
       : mode === "mixed" ? (sampleNames.length ? t("bannerMixedNamed", sampleNames.join(t("listSep"))) : t("bannerMixed"))
       : t("sampleBanner");
     if (STATIC?.build) banner.textContent += " " + t("dataUpdated", fmtDate(STATIC.build));
+    if (!navigator.onLine) banner.textContent += " " + t("offlineNote");
   }
 
   $("#langSel").addEventListener("change", (e) => { state.lang = e.target.value; store.set("mgd.lang", state.lang); applyLang(); route(); });
@@ -847,5 +848,9 @@
   document.addEventListener("scroll", (e) => { const w = e.target.closest?.(".carousel-wrap"); if (w) syncCarousel(w); }, true);
   window.addEventListener("resize", () => syncCarousels());
   window.addEventListener("hashchange", () => { route(); main.focus({ preventScroll: true }); window.scrollTo(0, 0); });
+  // 静态站：可安装、离线可看上次的数据（server.py 动态模式不注册，避免缓存后台接口）
+  if (STATIC && "serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  window.addEventListener("online", () => applyLang());
+  window.addEventListener("offline", () => applyLang());
   applyLang(); updateListCount(); route();
 })();

@@ -1,6 +1,7 @@
 // 界面文案（中 / 英 / 法）。商品原名始终保留商家原文。
 window.I18N = {
   zh: {
+    offlineNote: "离线中：显示的是上次打开时的数据。",
     flyerFlippTitle: (r, d) => `${r} 每周传单（${d}，Flipp 转录）`, flyerDatedTitle: (r, d) => `${r} 优惠（${d}）`,
     scope_flipp: "Flipp 显示 GTA 同一份传单；各店库存可能不同", scope_ontario_coupons: "安省统一会员优惠",
     sourceThirdParty: "第三方传单转录（Flipp），非官方来源", catalogThirdParty: "数字海报（第三方转录）",
@@ -103,6 +104,7 @@ window.I18N = {
       costco_warehouse: "Costco 仓库", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   en: {
+    offlineNote: "Offline: showing data from your last visit.",
     flyerFlippTitle: (r, d) => `${r} — weekly flyer (${d}, transcribed from Flipp)`, flyerDatedTitle: (r, d) => `${r} — deals (${d})`,
     scope_flipp: "Same flyer across the GTA (as shown on Flipp); stock may vary by store", scope_ontario_coupons: "Member deals across Ontario",
     sourceThirdParty: "Transcribed from a third-party flyer site (Flipp); not an official source", catalogThirdParty: "Digital flyer (third-party transcription)",
@@ -203,6 +205,7 @@ window.I18N = {
       costco_warehouse: "Costco warehouse", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   fr: {
+    offlineNote: "Hors ligne : données de votre dernière visite.",
     flyerFlippTitle: (r, d) => `${r} — circulaire hebdomadaire (${d}, transcrite de Flipp)`, flyerDatedTitle: (r, d) => `${r} — aubaines (${d})`,
     scope_flipp: "Même circulaire dans la RGT (selon Flipp); les stocks peuvent varier selon le magasin", scope_ontario_coupons: "Aubaines pour membres partout en Ontario",
     sourceThirdParty: "Transcrit d'un site tiers de circulaires (Flipp); source non officielle", catalogThirdParty: "Circulaire numérique (transcription tierce)",
