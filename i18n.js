@@ -1,6 +1,10 @@
 // 界面文案（中 / 英 / 法）。商品原名始终保留商家原文。
 window.I18N = {
   zh: {
+    flyerFlippTitle: (r, d) => `${r} 每周传单（${d}，Flipp 转录）`, flyerDatedTitle: (r, d) => `${r} 优惠（${d}）`,
+    scope_flipp: "Flipp 显示 GTA 同一份传单；各店库存可能不同", scope_ontario_coupons: "安省统一会员优惠",
+    sourceThirdParty: "第三方传单转录（Flipp），非官方来源", catalogThirdParty: "数字海报（第三方转录）",
+    thirdPartyNote: "这家的优惠转录自第三方传单网站 Flipp（官网有防机器人拦截），可能有出入，购买前以商家为准。",
     updTitle: "每周更新", updLast: (d) => `上次更新：${d}。`, updHow: "下列商家由人工对照官方海报每周录入，新一期海报出来后更新；网站每天晚上自动发布。其余商家目前只提供官方海报链接或示例数据。",
     updValidTo: (d) => `本期有效至 ${d}`, updNext: (d) => `下期 ${d} 开始，录入后更新`, updNone: "目前没有人工录入的商家。",
     scope_gta_edition: "大多伦多地区（GTA）各店同一版海报；渥太华、滑铁卢等地是另一版，价格不同。",
@@ -99,6 +103,10 @@ window.I18N = {
       costco_warehouse: "Costco 仓库", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   en: {
+    flyerFlippTitle: (r, d) => `${r} — weekly flyer (${d}, transcribed from Flipp)`, flyerDatedTitle: (r, d) => `${r} — deals (${d})`,
+    scope_flipp: "Same flyer across the GTA (as shown on Flipp); stock may vary by store", scope_ontario_coupons: "Member deals across Ontario",
+    sourceThirdParty: "Transcribed from a third-party flyer site (Flipp); not an official source", catalogThirdParty: "Digital flyer (third-party transcription)",
+    thirdPartyNote: "This store's deals are transcribed from the third-party flyer site Flipp (the official site blocks automated access). Details may differ — check with the store before buying.",
     updTitle: "Weekly updates", updLast: (d) => `Last updated ${d.replace(/\.$/, "")}.`, updHow: "The stores below are entered by hand from the official flyer each week and updated when the new flyer comes out; the site republishes automatically every evening. Other stores have official flyer links or sample data only.",
     updValidTo: (d) => `current flyer valid until ${d}`, updNext: (d) => `next starts ${d}, updated once entered`, updNone: "No stores are entered by hand yet.",
     scope_gta_edition: "Same flyer at all Greater Toronto Area stores; Ottawa, Waterloo and other areas get a different edition with different prices.",
@@ -195,6 +203,10 @@ window.I18N = {
       costco_warehouse: "Costco warehouse", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   fr: {
+    flyerFlippTitle: (r, d) => `${r} — circulaire hebdomadaire (${d}, transcrite de Flipp)`, flyerDatedTitle: (r, d) => `${r} — aubaines (${d})`,
+    scope_flipp: "Même circulaire dans la RGT (selon Flipp); les stocks peuvent varier selon le magasin", scope_ontario_coupons: "Aubaines pour membres partout en Ontario",
+    sourceThirdParty: "Transcrit d'un site tiers de circulaires (Flipp); source non officielle", catalogThirdParty: "Circulaire numérique (transcription tierce)",
+    thirdPartyNote: "Les aubaines de ce magasin sont transcrites du site tiers de circulaires Flipp (le site officiel bloque l'accès automatisé). Des écarts sont possibles — vérifiez auprès du magasin avant d'acheter.",
     updTitle: "Mises à jour hebdomadaires", updLast: (d) => `Dernière mise à jour : ${d}.`, updHow: "Les magasins ci-dessous sont saisis à la main chaque semaine à partir de la circulaire officielle et mis à jour à la sortie de la nouvelle circulaire; le site est republié automatiquement chaque soir. Les autres magasins n'ont qu'un lien vers la circulaire officielle ou des données d'exemple.",
     updValidTo: (d) => `circulaire en cours valide jusqu'au ${d}`, updNext: (d) => `prochaine dès le ${d}, mise à jour une fois saisie`, updNone: "Aucun magasin n'est encore saisi à la main.",
     scope_gta_edition: "Même circulaire dans tous les magasins de la région du Grand Toronto; Ottawa, Waterloo et d'autres régions ont une édition différente, avec des prix différents.",

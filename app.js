@@ -334,13 +334,14 @@
       const end = pageN === d.pages.length && d.next ? `<div class="endcard"><strong>${t("reachedEnd")}</strong>
           <a class="btn block" href="#/r/${encodeURIComponent(d.next.id)}">${esc(t("readNext", retailerName(d.next)))} ›</a></div>` : "";
       const isSample = d.pages.some((pg) => pg.some((o) => o.is_sample));
-      flyer = `<div class="tags">${isSample ? `<span class="tag sample">${t("catalog")}</span>` : `<span class="tag good">${t("catalogReal")}</span>`}<span class="tag ${d.days_left <= 1 ? "bad" : "neutral"}">${expiryLabel(d.days_left, d.valid_to)}</span></div>
+      const thirdParty = d.pages.some((pg) => pg.some((o) => o._source?.type === "third_party_flyer"));
+      flyer = `<div class="tags">${isSample ? `<span class="tag sample">${t("catalog")}</span>` : thirdParty ? `<span class="tag neutral">${t("catalogThirdParty")}</span>` : `<span class="tag good">${t("catalogReal")}</span>`}<span class="tag ${d.days_left <= 1 ? "bad" : "neutral"}">${expiryLabel(d.days_left, d.valid_to)}</span></div>
         <p class="small muted">${t("validRange")}${t("colon")}${fmtDay(d.valid_from)} – ${fmtDay(d.valid_to)} · ${t(isSample ? "sampleOffers" : "offersCount", d.offer_count)}${d.upcoming_count ? " · " + t("upcomingCount", d.upcoming_count) : ""}</p>
         ${cycleLine(r.id)}
         ${tabs}
         <div class="flyerpage" aria-label="${pageN}">${page.map(offerTile).join("")}</div>
         ${nav}${end}
-        <p class="small muted">${t("digitalFlyerNote")}${d.pages.some((pg) => pg.some((o) => o.is_sample)) ? t("allSampleNote") : t("manualNote")}</p>`;
+        <p class="small muted">${t("digitalFlyerNote")}${d.pages.some((pg) => pg.some((o) => o.is_sample)) ? t("allSampleNote") : thirdParty ? t("thirdPartyNote") : t("manualNote")}</p>`;
     } else {
       flyer = `${cycleLine(r.id)}<div class="notice">${t("noDigitalFlyer")}</div>`;
     }
@@ -372,17 +373,26 @@
     : f.link_status === "stale" ? t("flyerStale") : f.link_status === "unverified" ? t("flyerUnverified") : "");
 
   // 海报标题是台账里的中文；其他语言用通用说明
-  const flyerTitle = (f) => (state.lang === "zh" ? f.title
-    : f.region === "GTA" && f.start ? t("flyerGtaTitle", retailerName(f.retailer) || "", `${fmtDay(f.start)} – ${fmtDay(f.end)}`)
-    : t("flyerOfficialTitle", retailerName(f.retailer) || ""));
+  const flyerTitle = (f) => {
+    if (state.lang === "zh") return f.title;
+    const name = retailerName(f.retailer) || "", d = f.start ? `${fmtDay(f.start)} – ${fmtDay(f.end)}` : "";
+    if (!f.start) return t("flyerOfficialTitle", name);
+    if (f.transcribed_from) return t("flyerFlippTitle", name, d);
+    return f.region === "GTA" ? t("flyerGtaTitle", name, d) : t("flyerDatedTitle", name, d);
+  };
+  // 适用范围：中文用台账说明；英法按种类给固定译文
+  const flyerScope = (f) => (f.store_ids.length ? f.store_ids.join(", ")
+    : state.lang === "zh" ? (f.per_store_note || f.region || "—")
+    : f.transcribed_from ? t("scope_flipp") : f.region === "GTA" ? t("scope_gta_edition") : f.region === "Ontario" ? t("scope_ontario_coupons") : (f.region || "—"));
 
   function flyerCard(f) {
     const status = f.time_status === "link_only" ? t("flyerLink") : f.time_status === "current" ? t("flyerCurrent") : t("upcoming");
     return `<div class="card">
       <div class="row between"><h3 class="grow">${esc(retailerName(f.retailer))}</h3><span class="tag neutral">${status}</span></div>
       <p class="small muted">${esc(flyerTitle(f))}</p>
-      <p class="small">${t("flyerScope")}${t("colon")}${esc(f.store_ids.length ? f.store_ids.join(", ") : f.region === "GTA" && state.lang !== "zh" ? t("scope_gta_edition") : (f.per_store_note || f.region || "—"))}</p>
+      <p class="small">${t("flyerScope")}${t("colon")}${esc(flyerScope(f))}</p>
       ${f.status_note ? `<p class="small ${f.link_status === "verified" ? "muted" : ""}" ${f.link_status === "verified" ? "" : 'style="color:var(--warn)"'}>${f.link_status === "stale" ? "⚠ " : f.link_status === "unverified" ? "ⓘ " : ""}${esc(flyerNote(f))}</p>` : ""}
+      ${f.transcribed_from ? `<p class="small" style="color:var(--warn)">ⓘ ${t("thirdPartyNote")}</p>` : ""}
       ${f.reproduction_allowed ? "" : `<p class="small muted">${t("linkOnlyNote")}</p>`}
       <a class="btn secondary small" href="${esc(f.official_url)}" target="_blank" rel="noopener" data-track="view_source">${t("officialPage")} ↗</a>
     </div>`;
@@ -591,7 +601,7 @@
         <dt>${t("validUntil")}</dt><dd>${fmtDay(o.start)} – ${fmtDay(o.end)}${o._end_rule === "end_date_2359" ? `<br><span class="small muted">${t("endRule2359")}</span>` : ""}</dd>
         <dt>${t("stores")}</dt><dd>${stores.map((s) => `${esc(s.name)}<br><span class="small muted">${esc(s.address)}</span>`).join("<br>") || esc(o.region || "—")}</dd>
         <dt>${t("source")}</dt><dd>${state.lang === "zh" ? `${esc(o._source?.name || "—")}<br><span class="small muted">${esc(o._source?.license_status || "")}</span>${o.source_ref ? `<br><span class="small muted">${esc(o.source_ref)}</span>` : ""}`
-          : esc(t(o.is_sample ? "sourceDemo" : "sourceManual"))}</dd>
+          : esc(t(o.is_sample ? "sourceDemo" : o._source?.type === "third_party_flyer" ? "sourceThirdParty" : "sourceManual"))}</dd>
         <dt>${t("updated")}</dt><dd>${fmtDate(o.verified_at)}</dd>
         ${o.notes && state.lang === "zh" ? `<dt>${t("notes")}</dt><dd>${esc(o.notes)}</dd>` : ""}
       </dl></div>
