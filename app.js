@@ -826,10 +826,12 @@
       const bar = document.createElement("div");
       bar.className = "row list-actions";
       bar.innerHTML = `<button class="btn" type="button" id="shareList">${t("shareList")}</button>`
-        + `<button class="btn ghost" type="button" id="clearDone" ${list.some((i) => i.done) ? "" : "hidden"}>${t("clearDone")}</button>`;
+        + `<button class="btn ghost" type="button" id="clearDone" ${list.some((i) => i.done) ? "" : "hidden"}>${t("clearDone")}</button>`
+        + `<button class="btn ghost" type="button" id="clearGone" hidden></button>`;
       main.querySelector("h1").after(bar);
       $("#shareList").addEventListener("click", shareList);
       $("#clearDone")?.addEventListener("click", () => { setList(getList().filter((i) => !i.done)); pageList(); });
+      $("#clearGone")?.addEventListener("click", () => { const g = new Set(($("#clearGone").dataset.keys || "").split("\n")); setList(getList().filter((i) => !g.has(i.key))); pageList(); });
     }
     await renderWants();
     if (!list.length) { $("#lb").innerHTML = `<p class="empty">${t("listEmpty")}</p>`; return; }
@@ -841,7 +843,7 @@
 
   // 门店名已经包含商家名（如 Grant's Foodmart）时不再重复
   const storeLabel = (i) => {
-    const r = retailerName(i.retailer);
+    const r = retailerName(i.retailer) || "";
     return i.store_name && i.store_name !== "—" && !i.store_name.toLowerCase().includes(r.toLowerCase()) ? `${r} · ${i.store_name}` : i.store_name && i.store_name !== "—" ? i.store_name : r;
   };
 
@@ -849,7 +851,7 @@
   function listText() {
     const lines = [t("listTitle")];
     const groups = {};
-    getList().filter((i) => !i.done).forEach((i) => (groups[i.key.split("@")[1] || "—"] ||= []).push(i));
+    getList().filter((i) => !i.done && !isGone(i)).forEach((i) => (groups[i.key.split("@")[1] || "—"] ||= []).push(i));
     for (const items of Object.values(groups)) {
       let sum = 0, unknown = false;
       lines.push("", `【${storeLabel(items[0])}】`);
@@ -910,16 +912,24 @@
     }));
   }
 
+  // 已过期 / 已下架：有核对结果按核对结果，离线时按加入时的结束日期（多伦多日期）
+  const isGone = (i, st) => st ? st.status === "taken_down" || st.status === "missing" || st.time_status === "ended"
+    : !!i.snap.end && i.snap.end.slice(0, 10) < torontoToday();
+
   function renderList(list, status) {
     const groups = {};
     list.forEach((i) => (groups[i.key.split("@")[1] || "—"] ||= []).push(i));
     let html = "";
+    const goneKeys = [];
     for (const [sid, items] of Object.entries(groups)) {
-      let sum = 0, unknown = false;
+      let sum = 0, unknown = false, goneN = 0;
       const rows = items.map((i) => {
         const s = i.snap, st = status[i.offer_id];
+        const gone = isGone(i, st);
+        if (gone) goneKeys.push(i.key);
         let flag = "";
-        if (st) {
+        if (!st && gone) flag = `<span class="tag bad">${t("statusExpired")}</span>`;
+        else if (st) {
           if (st.status === "taken_down" || st.status === "missing") flag = `<span class="tag bad">${t("statusRemoved")}</span>`;
           else if (st.time_status === "ended") flag = `<span class="tag bad">${t("statusExpired")}</span>`;
           else if (st.time_status === "upcoming") flag = `<span class="tag neutral">${t("statusUpcoming", fmtDay(s.start))}</span>`;
@@ -929,7 +939,7 @@
           } else flag = `<span class="tag good">${t("statusOk")}</span>`;
         }
         const cost = itemCost(s, i.qty);
-        if (!i.done) { if (cost == null) unknown = true; else sum += cost; }
+        if (!i.done) { if (gone) goneN += 1; else if (cost == null) unknown = true; else sum += cost; }
         const snapTxt = s.multi_buy ? t("multiNeed", s.multi_buy.qty, money(s.multi_buy.total))
           : s.price_basis === "per_lb" ? `${cur(s.price)}/lb` : s.price_basis === "per_kg" ? `${cur(s.price)}/kg` : `${cur(s.price)}`;
         const unmet = s.multi_buy && i.qty % s.multi_buy.qty !== 0
@@ -938,13 +948,13 @@
           <label class="check"><input type="checkbox" data-act="done" ${i.done ? "checked" : ""}>
             <span class="offer-name">${esc(state.lang === "zh" ? s.name_zh || s.name_original : s.name_original)}</span></label>
           <div class="small muted">${esc(s.size)} · ${esc(chName(s.channel))} · ${t("snapshot")} ${esc(snapTxt)} · ${t("validUntil")} ${fmtDay(s.end)}</div>
-          <div class="tags">${s.is_sample ? `<span class="tag sample">${t("sample_tag")}</span>` : ""}${flag}</div>
+          <div class="tags">${s.is_sample ? `<span class="tag sample">${t("sample_tag")}</span>` : ""}${flag}${gone ? ` <a class="small" href="#/search?${qs({ q: state.lang === "zh" ? s.name_zh || s.name_original : s.name_original })}">${t("findCurrent")} ›</a>` : ""}</div>
           ${unmet}
           <div class="row between">
             <div class="qty" role="group" aria-label="${t("qty")}">
               <button class="btn ghost" data-act="dec" aria-label="−">−</button><output>${i.qty}</output><button class="btn ghost" data-act="inc" aria-label="+">+</button>
             </div>
-            <div>${cost == null ? `<span class="muted small">${s.price_basis === "package" ? "?" : t("byWeight")}</span>` : `<strong>${cur(cost)}</strong>`}</div>
+            <div>${gone && cost != null ? `<s class="muted">${cur(cost)}</s>` : cost == null ? `<span class="muted small">${s.price_basis === "package" ? "?" : t("byWeight")}</span>` : `<strong>${cur(cost)}</strong>`}</div>
             <button class="btn danger small" data-act="del">${t("remove")}</button>
           </div></div>`;
       }).join("");
@@ -953,9 +963,12 @@
         <p class="small muted">${esc(first.store_address)}</p>${rows}
         <div class="card"><div class="row between"><strong>${t("subtotal")}</strong><strong>${subtotalText(sum, unknown)}</strong></div>
         ${unknown ? `<p class="small" style="color:var(--warn)">${t("partlyUnknown")}</p>` : ""}
+        ${goneN ? `<p class="small" style="color:var(--warn)">${t("goneExcluded", goneN)}</p>` : ""}
         <p class="small muted">${t("notIncluded")}</p></div></section>`;
     }
     $("#lb").innerHTML = html;
+    const cg = $("#clearGone");
+    if (cg) { cg.hidden = !goneKeys.length; cg.textContent = t("clearGone", goneKeys.length); cg.dataset.keys = goneKeys.join("\n"); }
     $("#lb").querySelectorAll("[data-act]").forEach((el) => el.addEventListener(el.type === "checkbox" ? "change" : "click", () => {
       const key = el.closest("[data-key]").dataset.key;
       const l = getList(); const it = l.find((x) => x.key === key);
