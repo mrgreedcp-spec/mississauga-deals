@@ -1,7 +1,7 @@
 /* 离线支持（只在静态站启用）：页面外壳缓存优先；数据和页面网络优先、断网时用上次的缓存。
    版本号和外壳清单由 scripts/export_site.py 在导出时填入；每次发布换一个版本，旧缓存自动清掉。 */
-const VERSION = "mgd-aaea09ca3a";
-const SHELL = ["./", "manifest.webmanifest", "icons/icon-192.png", "style.css?v=822756701a", "config.js?v=aaea09ca3a", "i18n.js?v=51801a105a", "core.js?v=72cfa109c8", "static_api.js?v=1642b03239", "app.js?v=ca12c1e61f"];
+const VERSION = "mgd-52939b121c";
+const SHELL = ["./", "manifest.webmanifest", "icons/icon-192.png", "style.css?v=822756701a", "config.js?v=52939b121c", "i18n.js?v=51801a105a", "core.js?v=2451bc2043", "static_api.js?v=1642b03239", "app.js?v=ca12c1e61f"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

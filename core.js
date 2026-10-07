@@ -25,6 +25,57 @@
     [["海鲜", "seafood", "fruits de mer"], ["fish", "shrimp"]],
   ].forEach(([words, cats]) => words.forEach((w) => (CATEGORY_GROUPS[w] = cats)));
 
+  // 中文常用叫法 → 英文原名里的写法（core.NAME_SYNONYMS）
+  const NAME_SYNONYMS = {
+    "排骨": ["rib"],
+    "肋排": ["rib"],
+    "牛仔骨": ["short rib"],
+    "五花肉": ["pork belly"],
+    "五花": ["belly"],
+    "鸡翅": ["chicken wing"],
+    "鸡腿": ["drumstick", "chicken leg", "chicken thigh"],
+    "鸡胸": ["chicken breast"],
+    "鸡爪": ["chicken feet", "chicken paw"],
+    "凤爪": ["chicken feet", "chicken paw"],
+    "牛腩": ["brisket", "flank"],
+    "绞肉": ["ground", "minced"],
+    "肉馅": ["ground", "minced"],
+    "三文鱼": ["salmon"],
+    "虾仁": ["shrimp meat", "peeled shrimp"],
+    "蚝油": ["oyster sauce"],
+    "泡面": ["instant noodle"],
+    "方便面": ["instant noodle"],
+    "米粉": ["vermicelli", "rice noodle", "rice stick"],
+    "河粉": ["rice noodle", "pho"],
+    "橄榄油": ["olive oil"],
+    "菜籽油": ["canola"],
+    "冰淇淋": ["ice cream"],
+    "雪糕": ["ice cream", "ice bar"],
+    "冰棒": ["ice bar", "popsicle"],
+    "薯片": ["chips", "crisps"],
+    "饼干": ["cookie", "cracker", "biscuit"],
+    "可乐": ["coke", "coca cola", "pepsi"],
+    "汤圆": ["tangyuan", "glutinous rice ball"],
+    "月饼": ["mooncake", "moon cake"],
+    "榴莲": ["durian"],
+    "菜心": ["choy sum"],
+    "西兰花": ["broccoli"],
+    "芥兰": ["gai lan", "kai lan"],
+    "胡萝卜": ["carrot"],
+    "黄瓜": ["cucumber"],
+    "生姜": ["ginger"],
+    "大蒜": ["garlic"],
+    "香菇": ["shiitake"],
+    "金针菇": ["enoki"],
+    "哈密瓜": ["cantaloupe", "honeydew"],
+    "柚子": ["pomelo"],
+    "火锅": ["hot pot", "hotpot"],
+    "咸蛋": ["salted egg", "salted duck egg"],
+    "皮蛋": ["preserved egg", "century egg"],
+    "椰奶": ["coconut milk"],
+    "炼奶": ["condensed"],
+  };
+
   const CJK_ONLY = /^[㐀-鿿]+$/;
   const ZH_NOISE = /【[^】]*】|（[^）]*）|\([^)]*\)|\d[\d.]*\s*[a-z公斤克磅升毫个只件包盒袋]*/g;
   const ZH_SPLIT = /[和与及、/&+\s]+/;
@@ -75,6 +126,7 @@
     if (hay.includes(nq)) return 3;
     const toks = nq.split(" ").filter(Boolean);
     if (toks.length && toks.every((t) => hay.includes(t))) return 2;
+    if ((has(NAME_SYNONYMS, nq) ? NAME_SYNONYMS[nq] : []).some((s) => hay.includes(s))) return 2;
     return 0;
   }
 
@@ -152,6 +204,6 @@
     return o._end_date ? daysBetween(todayIso, o._end_date) : null;
   }
 
-  return { normalize, CATEGORY_GROUPS, zhHeadMatch, buildAliasIndex, queryCategories, textMatch, searchOffers,
+  return { normalize, CATEGORY_GROUPS, NAME_SYNONYMS, zhHeadMatch, buildAliasIndex, queryCategories, textMatch, searchOffers,
     markLowest, haversineKm, round1, parsePostal, timeStatus, torontoDate, daysBetween, daysLeft };
 });
