@@ -1,6 +1,7 @@
 // 界面文案（中 / 英 / 法）。商品原名始终保留商家原文。
 window.I18N = {
   zh: {
+    prevLine: (p, d) => `上期价 ${p}（${d} 起）`, prevCheaper: (n) => `比上期便宜 ${n}%`, prevPricier: (n) => `比上期贵 ${n}%`, prevSame: "与上期同价",
     shareList: "分享清单", shareCopied: "清单已复制，可以粘贴给家人", clearDone: "清除已买",
     offlineNote: "离线中：显示的是上次打开时的数据。",
     flyerFlippTitle: (r, d) => `${r} 每周传单（${d}，Flipp 转录）`, flyerDatedTitle: (r, d) => `${r} 优惠（${d}）`,
@@ -105,6 +106,7 @@ window.I18N = {
       costco_warehouse: "Costco 仓库", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   en: {
+    prevLine: (p, d) => `Last period ${p} (from ${d})`, prevCheaper: (n) => `${n}% cheaper than last period`, prevPricier: (n) => `${n}% pricier than last period`, prevSame: "Same as last period",
     shareList: "Share list", shareCopied: "List copied — paste it to family", clearDone: "Clear checked",
     offlineNote: "Offline: showing data from your last visit.",
     flyerFlippTitle: (r, d) => `${r} — weekly flyer (${d}, transcribed from Flipp)`, flyerDatedTitle: (r, d) => `${r} — deals (${d})`,
@@ -207,6 +209,7 @@ window.I18N = {
       costco_warehouse: "Costco warehouse", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   fr: {
+    prevLine: (p, d) => `Période précédente ${p} (dès le ${d})`, prevCheaper: (n) => `${n} % moins cher que la période précédente`, prevPricier: (n) => `${n} % plus cher que la période précédente`, prevSame: "Même prix que la période précédente",
     shareList: "Partager la liste", shareCopied: "Liste copiée — collez-la pour votre famille", clearDone: "Retirer les articles cochés",
     offlineNote: "Hors ligne : données de votre dernière visite.",
     flyerFlippTitle: (r, d) => `${r} — circulaire hebdomadaire (${d}, transcrite de Flipp)`, flyerDatedTitle: (r, d) => `${r} — aubaines (${d})`,

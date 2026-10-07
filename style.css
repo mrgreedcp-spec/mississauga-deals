@@ -321,3 +321,6 @@ pre.code { background: var(--brand-soft); padding: 10px; border-radius: 8px; ove
   .sample-banner:not(.open) > span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 }
 .list-actions { gap: 8px; flex-wrap: wrap; margin: 4px 0 12px; }
+.prev { margin: 6px 0 0; color: var(--muted); }
+.prev.down { color: var(--good, #1f7a3a); }
+.prev.up { color: var(--warn, #9a5b00); }

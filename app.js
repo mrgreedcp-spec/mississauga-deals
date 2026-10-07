@@ -273,8 +273,24 @@
       <span class="oprice">${c.member ? `<small>${t("memberPrice")} </small>` : ""}${price}</span>
       ${sv}
       ${o._lowest ? `<span class="olow">✓ ${t("lowestLabel")}</span>` : ""}
+      ${(prevChange(o)?.pct ?? 0) <= -5 ? `<span class="olow">↓ ${esc(t("prevCheaper", -prevChange(o).pct))}</span>` : ""}
       <span class="oend ${o._days_left != null && o._days_left <= 1 ? "soon" : ""}">${o._time_status === "upcoming" ? t("startsOn") + " " + fmtDay(o.start) : expiryLabel(o._days_left, o.end)}</span>
     </a><button class="oadd" type="button" data-add="${esc(o.id)}" aria-label="${esc(t("addToListNamed", offerName(o)))}" title="${esc(t("addToList"))}" ${canAdd ? "" : "disabled"}>+</button></div>`;
+  }
+
+  // 比上期：同款上期价（_prev）与本期价的变动百分比；没有上期或变动不到 1% 返回 null/0
+  function prevChange(o) {
+    const p = o._prev;
+    if (!p || !p.price || o.price == null) return null;
+    const pct = Math.round(((o.price - p.price) / p.price) * 100);
+    return { pct, price: p.price, start: p.start };
+  }
+  function prevLine(o) {
+    const d = prevChange(o);
+    if (!d) return "";
+    const what = d.pct <= -1 ? t("prevCheaper", -d.pct) : d.pct >= 1 ? t("prevPricier", d.pct) : t("prevSame");
+    const unit = o.price_basis === "per_lb" ? "/lb" : o.price_basis === "per_kg" ? "/kg" : "";
+    return `<p class="small prev ${d.pct <= -1 ? "down" : d.pct >= 1 ? "up" : ""}">${esc(t("prevLine", cur(d.price) + unit, fmtDay(d.start)))} · ${esc(what)}</p>`;
   }
 
   function regionLine() {
@@ -584,7 +600,7 @@
       ${o.is_sample ? `<div class="notice warn">${t("sampleBanner")}</div>` : `<div class="notice">${t("manualNote")}</div>`}
       ${o._time_status === "ended" ? `<div class="notice bad">${t("ended")}${t("lparen")}${fmtDay(o.end)}${t("rparen")}</div>` : ""}
       <div class="olayout"><div>
-      <div class="card">${priceBlock(o)}${condTags(o)}${lowestBlock(o)}</div>
+      <div class="card">${priceBlock(o)}${prevLine(o)}${condTags(o)}${lowestBlock(o)}</div>
       ${o._comparable ? "" : `<div class="notice">${t("notComparable")}${t("colon")}${esc(o._not_comparable_reasons.join(t("clauseSep")))}</div>`}
       <form id="addForm" class="card stack">
         ${stores.length > 1 ? `<label for="storePick">${t("chooseStore")}</label><select id="storePick">${stores.map((s) => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join("")}</select>` : ""}
