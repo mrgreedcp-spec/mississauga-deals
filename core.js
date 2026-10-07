@@ -155,11 +155,15 @@
       const f = o._flags || [];
       if (f.includes("member") && !includeMember) continue;
       if ((f.includes("coupon") || f.includes("activation")) && !includeCoupon) continue;
-      const key = o._match_key + "\u0000" + o.channel;
+      const key = o._match_key + "\u0000" + o.channel + "\u0000" + (o.is_sample ? 1 : 0); // 真实与示例分开比
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(o);
     }
+    // 同渠道里已有真实优惠时，示例不贴最低标签（core.mark_lowest）
+    const realCh = new Set();
+    for (const items of groups.values()) if (!items[0].is_sample) realCh.add(items[0].channel);
     for (const items of groups.values()) {
+      if (items[0].is_sample && realCh.has(items[0].channel)) continue;
       if (items.length < 2) continue; // 只有一条时不存在比较
       const best = Math.min(...items.map((i) => i._unit_price.value));
       for (const i of items) {

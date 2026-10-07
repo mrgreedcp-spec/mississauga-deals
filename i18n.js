@@ -1,6 +1,7 @@
 // 界面文案（中 / 英 / 法）。商品原名始终保留商家原文。
 window.I18N = {
   zh: {
+    samplesBelow: "以下为示例数据（虚构价格），不和上面的真实价格比",
     subtotalUnknown: "称重后才知道",
     guideLink: "好用法：一周怎么用最省事",
     settingsTitle: "设置",
@@ -157,6 +158,7 @@ window.I18N = {
       costco_warehouse: "Costco 仓库", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   en: {
+    samplesBelow: "Below: sample data (made-up prices), not compared with the real prices above",
     subtotalUnknown: "Known after weighing",
     guideLink: "How to use it well: a weekly routine",
     settingsTitle: "Settings",
@@ -311,6 +313,7 @@ window.I18N = {
       costco_warehouse: "Costco warehouse", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   fr: {
+    samplesBelow: "Ci-dessous : données d'exemple (prix fictifs), non comparées aux vrais prix ci-dessus",
     subtotalUnknown: "Connu après la pesée",
     guideLink: "Bien l'utiliser : la routine de la semaine",
     settingsTitle: "Réglages",

@@ -154,16 +154,17 @@
       let unranked = [];
       if (sort === "unit_price") {
         const ok = (i) => i._comparable && i._unit_price;
-        unranked = items.filter((i) => !ok(i));
+        const smp = (a, b) => (+!!a.is_sample) - (+!!b.is_sample); // 示例数据排在真实优惠之后
+        unranked = items.filter((i) => !ok(i)).sort(smp);
         const chOrder = Object.fromEntries(Object.keys(B.channels).map((k, n) => [k, n]));
-        items = items.filter(ok).sort((a, b) => chOrder[a.channel] - chOrder[b.channel]
+        items = items.filter(ok).sort((a, b) => chOrder[a.channel] - chOrder[b.channel] || smp(a, b)
           || cmp(a._unit_price.dimension, b._unit_price.dimension) || a._unit_price.value - b._unit_price.value);
       } else if (sort === "price") {
-        const need = (i) => [i._required.total == null ? 1 : 0, i._required.total || 0];
-        items.sort((a, b) => { const x = need(a), y = need(b); return x[0] - y[0] || x[1] - y[1]; });
+        const need = (i) => [+!!i.is_sample, i._required.total == null ? 1 : 0, i._required.total || 0];
+        items.sort((a, b) => { const x = need(a), y = need(b); return x[0] - y[0] || x[1] - y[1] || x[2] - y[2]; });
       } else if (sort === "distance") {
-        const d = (i) => [i._distance_km == null ? 1 : 0, i._distance_km || 0];
-        items.sort((a, b) => { const x = d(a), y = d(b); return x[0] - y[0] || x[1] - y[1]; });
+        const d = (i) => [+!!i.is_sample, i._distance_km == null ? 1 : 0, i._distance_km || 0];
+        items.sort((a, b) => { const x = d(a), y = d(b); return x[0] - y[0] || x[1] - y[1] || x[2] - y[2]; });
       } else items.sort((a, b) => b._score - a._score || (+!!a.is_sample) - (+!!b.is_sample)  // 同分：真实优惠在前，省得多的在前
         || (b._savings?.pct || 0) - (a._savings?.pct || 0) || cmp(a.channel, b.channel));
 

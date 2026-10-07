@@ -672,7 +672,10 @@
       // 按渠道分段：不同渠道的价格不混在一个排名里
       const groups = [];
       data.items.forEach((o) => { if (!groups.length || groups.at(-1).ch !== o.channel) groups.push({ ch: o.channel, items: [] }); groups.at(-1).items.push(o); });
-      html += groups.map((g) => `<h3 class="chhead">${t("channel")}${t("colon")}${esc(chName(g.ch))}</h3><div class="ogrid">${g.items.map(offerTile).join("")}</div>`).join("");
+      // 段内真实优惠在前；有真实优惠时在示例前加一条分隔说明
+      const tiles = (items) => items.map((o, n) => (o.is_sample && n > 0 && !items[n - 1].is_sample
+        ? `<p class="sample-split small muted">${t("samplesBelow")}</p>` : "") + offerTile(o)).join("");
+      html += groups.map((g) => `<h3 class="chhead">${t("channel")}${t("colon")}${esc(chName(g.ch))}</h3><div class="ogrid">${tiles(g.items)}</div>`).join("");
     } else html += `<div class="ogrid">${data.items.map(offerTile).join("")}</div>`;
     if (data.total > data.page * data.page_size) {
       html += `<a class="btn ghost block" href="#/search?${qs({ ...p, page: data.page + 1 })}">${t("nextPage")}</a>`;
