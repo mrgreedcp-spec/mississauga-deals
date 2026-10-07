@@ -249,7 +249,7 @@
     }
     function meta(c) {
       return { now: new Date(c.nowMs).toISOString(), timezone: B.timezone, channels: B.channels, radii: B.radii, fsa: B.fsa,
-        retailers: withMode(c), data_mode: overallMode(c), built_at: B.built_at, flyer_cycles: B.flyer_cycles || {},
+        retailers: withMode(c), data_mode: overallMode(c), built_at: B.built_at, data_updated_at: B.data_updated_at || null, flyer_cycles: B.flyer_cycles || {},
         categories: B.aliases.map((a) => ({ category: a.category, zh: a.zh[0], en: a.en[0], fr: (a.fr || a.en)[0] })) };
     }
 

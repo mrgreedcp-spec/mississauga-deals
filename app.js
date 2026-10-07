@@ -521,7 +521,7 @@
         <span class="small">${to ? t("updValidTo", fmtDay(to)) : ""}${cy?.next ? " · " + t("updNext", fmtDay(cy.next)) : ""}</span>
         ${cy?.c.scope ? `<span class="small muted">📍 ${t("scope_" + cy.c.scope)}</span>` : ""}</li>`;
     }).join("");
-    const built = STATIC?.build || state.meta.built_at;
+    const built = state.meta.data_updated_at || STATIC?.build || state.meta.built_at;
     return `<section class="cycles"><h2>${t("updTitle")}</h2>
       <p class="small muted">${built ? t("updLast", fmtDate(built)) + " " : ""}${t("updHow")}</p>
       ${rows ? `<ul class="cyclist">${rows}</ul>` : `<p class="small muted">${t("updNone")}</p>`}</section>`;
@@ -930,7 +930,7 @@
     // 混合模式点名哪些商家是示例，比笼统的「部分商家」更准确
     const sampleNames = (state.meta?.retailers || []).filter((r) => r.offer_data === "sample").map(retailerName);
     // 更新时间、离线提示放最前：手机上横幅只显示两行（点按展开），关键信息不被截掉
-    const lead = [!navigator.onLine && t("offlineNote"), STATIC?.build && t("dataUpdated", fmtDate(STATIC.build))].filter(Boolean);
+    const lead = [!navigator.onLine && t("offlineNote"), (state.meta?.data_updated_at || STATIC?.build) && t("dataUpdated", fmtDate(state.meta?.data_updated_at || STATIC.build))].filter(Boolean);
     const txt = document.createElement("span");
     banner.replaceChildren(txt);
     txt.textContent = [...lead, mode === "real" ? t("bannerReal")
