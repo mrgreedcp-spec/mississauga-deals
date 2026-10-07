@@ -208,8 +208,16 @@
     }
     // 一组优惠里结束最晚的那条（对应 Python 的 max(parse_end)）
     const latest = (os) => os.reduce((a, o) => (a == null || o._end_ts > a._end_ts ? o : a), null);
+    // 大多数优惠的结束时间（主海报），条数相同取较早的（对应 Python 的 _flyer_cover）
+    function mainEnd(os) {
+      const cnt = new Map(), first = new Map();
+      for (const o of os) { cnt.set(o._end_ts, (cnt.get(o._end_ts) || 0) + 1); if (!first.has(o._end_ts)) first.set(o._end_ts, o); }
+      let best = null;
+      for (const [ts, n] of cnt) if (best == null || n > cnt.get(best) || (n === cnt.get(best) && ts < best)) best = ts;
+      return best == null ? null : first.get(best);
+    }
     function flyerCover(r, os, c) {
-      const last = latest(os);
+      const last = mainEnd(os);
       return { retailer: r, offer_count: os.length, days_left: last ? C.daysBetween(c.today, last._end_date) : null,
         valid_to: last ? last._end_resolved : null, official_url: r.flyer_entry || r.website };
     }

@@ -393,6 +393,22 @@
       <div class="notice small">${t("manualNote")}</div>`;
   }
 
+  // 首页提醒：清单里今天/明天截止或已过期的条目（只看本机快照，不联网）
+  function listAlert() {
+    const today = torontoToday();
+    const tmr = new Date(Date.parse(today + "T00:00:00Z") + 864e5).toISOString().slice(0, 10);
+    let a = 0, b = 0, c = 0;
+    getList().filter((i) => !i.done && i.snap?.end).forEach((i) => {
+      const e = i.snap.end.slice(0, 10);
+      if (e < today) c += 1; else if (e === today) a += 1; else if (e === tmr) b += 1;
+    });
+    if (!a && !b && !c) return;
+    const card = document.createElement("div");
+    card.className = "notice warn row between list-alert";
+    card.innerHTML = `<span class="grow">⏰ ${esc(t("listAlert", a, b, c))}</span><a class="btn small" href="#/list">${t("listAlertBtn")} ›</a>`;
+    main.prepend(card);
+  }
+
   async function pageHome() {
     main.innerHTML = `<form id="homeSearch" class="searchbar" role="search">
         <input type="search" id="q" list="qSuggest" autocomplete="off" placeholder="${esc(t("searchPlaceholder"))}" aria-label="${esc(t("search"))}">
@@ -408,6 +424,7 @@
       main.prepend(card);
     }
     showInstall();
+    listAlert();
     const d = await api("/api/home");
     const favs = getFavs();
     const modeOf = (id) => state.meta.retailers.find((r) => r.id === id)?.offer_data;
@@ -928,7 +945,8 @@
         const gone = isGone(i, st);
         if (gone) goneKeys.push(i.key);
         let flag = "";
-        if (!st && gone) flag = `<span class="tag bad">${t("statusExpired")}</span>`;
+        const pastEnd = !!s.end && s.end.slice(0, 10) < torontoToday();
+        if ((!st || st.status === "missing") && pastEnd) flag = `<span class="tag bad">${t("statusExpired")}</span>`;  // 静态站不带已结束的优惠，按结束日期判断
         else if (st) {
           if (st.status === "taken_down" || st.status === "missing") flag = `<span class="tag bad">${t("statusRemoved")}</span>`;
           else if (st.time_status === "ended") flag = `<span class="tag bad">${t("statusExpired")}</span>`;

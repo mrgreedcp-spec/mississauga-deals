@@ -336,6 +336,7 @@ pre.code { background: var(--brand-soft); padding: 10px; border-radius: 8px; ove
 .guide p { margin: 0 0 10px; }
 @media (min-width: 900px) { .guide { grid-template-columns: 1fr 1fr; } }
 .setup { gap: 10px; align-items: center; margin-bottom: 12px; }
+.list-alert { gap: 10px; align-items: center; margin: 0 0 12px; }
 .guide .card { margin: 0; }
 .guide-link { margin: 20px 0 8px; text-align: center; }
 .sample-split { grid-column: 1 / -1; margin: 4px 0 0; padding-top: 8px; border-top: 1px dashed var(--line); }
