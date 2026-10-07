@@ -1,6 +1,7 @@
 // 界面文案（中 / 英 / 法）。商品原名始终保留商家原文。
 window.I18N = {
   zh: {
+    subtotalUnknown: "称重后才知道",
     guideLink: "好用法：一周怎么用最省事",
     settingsTitle: "设置",
     settingsIntro: "只保存在这台设备上，不需要注册。设好后首页、搜索和清单都按你的习惯显示。",
@@ -156,6 +157,7 @@ window.I18N = {
       costco_warehouse: "Costco 仓库", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   en: {
+    subtotalUnknown: "Known after weighing",
     guideLink: "How to use it well: a weekly routine",
     settingsTitle: "Settings",
     settingsIntro: "Saved on this device only — no account needed. Home, search and your list then follow your habits.",
@@ -309,6 +311,7 @@ window.I18N = {
       costco_warehouse: "Costco warehouse", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   fr: {
+    subtotalUnknown: "Connu après la pesée",
     guideLink: "Bien l'utiliser : la routine de la semaine",
     settingsTitle: "Réglages",
     settingsIntro: "Enregistré sur cet appareil seulement — aucun compte. L'accueil, la recherche et votre liste suivent vos habitudes.",

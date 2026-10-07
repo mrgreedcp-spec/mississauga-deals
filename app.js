@@ -796,6 +796,9 @@
     setList(list); track("add_to_list"); toast(t("added"));
   }
 
+  // 小计文字：全部金额未知（如都是称重商品）时不写 $0.00，避免看起来像免费
+  const subtotalText = (sum, unknown) => unknown && sum < 0.005 ? t("subtotalUnknown") : `${cur(sum)}${unknown ? " +?" : ""}`;
+
   // 估算一项金额；无法确定时返回 null（不按零计算）
   function itemCost(snap, qty) {
     if (snap.price_basis === "per_lb" || snap.price_basis === "per_kg") return null;
@@ -853,7 +856,7 @@
         const name = state.lang === "zh" ? s.name_zh || s.name_original : s.name_original;
         lines.push(`□ ${name}${s.size && !/\d/.test(name) ? " " + s.size : ""} ×${i.qty}${cost == null ? "" : " ≈ " + cur(cost)}`);
       }
-      lines.push(`${t("subtotal")}${t("colon")}${cur(sum)}${unknown ? " +?" : ""}`);
+      lines.push(`${t("subtotal")}${t("colon")}${subtotalText(sum, unknown)}`);
     }
     const wants = getWants().map((w) => w.q);
     if (wants.length) lines.push("", `${t("wantsTitle")}${t("colon")}${wants.join(t("listSep"))}`);
@@ -945,7 +948,7 @@
       const first = items[0];
       html += `<section><h2>${esc(storeLabel(first))}</h2>
         <p class="small muted">${esc(first.store_address)}</p>${rows}
-        <div class="card"><div class="row between"><strong>${t("subtotal")}</strong><strong>${cur(sum)}${unknown ? " +?" : ""}</strong></div>
+        <div class="card"><div class="row between"><strong>${t("subtotal")}</strong><strong>${subtotalText(sum, unknown)}</strong></div>
         ${unknown ? `<p class="small" style="color:var(--warn)">${t("partlyUnknown")}</p>` : ""}
         <p class="small muted">${t("notIncluded")}</p></div></section>`;
     }
