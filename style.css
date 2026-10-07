@@ -313,3 +313,10 @@ pre.code { background: var(--brand-soft); padding: 10px; border-radius: 8px; ove
 /* 想买清单 */
 .wants .want{margin-bottom:10px}
 .wants .want .carousel-wrap{margin-top:6px}
+
+/* 手机上横幅收成两行，点按展开 */
+@media (max-width: 640px) {
+  .sample-banner:not(.open) { cursor: pointer; }
+  .sample-banner:not(.open) > span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .sample-banner[hidden] { display: none; }
+}

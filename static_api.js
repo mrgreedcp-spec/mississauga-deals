@@ -161,7 +161,8 @@
       } else if (sort === "distance") {
         const d = (i) => [i._distance_km == null ? 1 : 0, i._distance_km || 0];
         items.sort((a, b) => { const x = d(a), y = d(b); return x[0] - y[0] || x[1] - y[1]; });
-      } else items.sort((a, b) => b._score - a._score || cmp(a.channel, b.channel));
+      } else items.sort((a, b) => b._score - a._score || (+!!a.is_sample) - (+!!b.is_sample)  // 同分：真实优惠在前，省得多的在前
+        || (b._savings?.pct || 0) - (a._savings?.pct || 0) || cmp(a.channel, b.channel));
 
       const page = Math.max(1, parseInt(p.page || "1", 10) || 1), size = B.page_size;
       const total = items.length;
@@ -206,7 +207,7 @@
     function flyerCover(r, os, c) {
       const last = latest(os);
       return { retailer: r, offer_count: os.length, days_left: last ? C.daysBetween(c.today, last._end_date) : null,
-        official_url: r.flyer_entry || r.website };
+        valid_to: last ? last._end_resolved : null, official_url: r.flyer_entry || r.website };
     }
     function home(p, c) {
       const byR = currentByRetailer(c);

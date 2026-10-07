@@ -294,7 +294,7 @@
     const d = await api("/api/home");
     const favs = getFavs();
     const modeOf = (id) => state.meta.retailers.find((r) => r.id === id)?.offer_data;
-    const coverSub = (c) => `${expiryLabel(c.days_left)}${c.offer_count ? " · " + t(modeOf(c.retailer.id) === "real" ? "offersCount" : "sampleOffers", c.offer_count) : ""}`;
+    const coverSub = (c) => `${expiryLabel(c.days_left, c.valid_to)}${c.offer_count ? " · " + t(modeOf(c.retailer.id) === "real" ? "offersCount" : "sampleOffers", c.offer_count) : ""}`;
     const favCovers = d.covers.filter((c) => favs.includes(c.retailer.id));
     let html = section(t("myStores"), favCovers.length
       ? carousel(favCovers.map((c) => retailerTile(c.retailer, coverSub(c))).join(""), t("myStores"))
@@ -817,13 +817,16 @@
     banner.hidden = mode === "none";
     // 混合模式点名哪些商家是示例，比笼统的「部分商家」更准确
     const sampleNames = (state.meta?.retailers || []).filter((r) => r.offer_data === "sample").map(retailerName);
-    banner.textContent = mode === "real" ? t("bannerReal")
+    // 更新时间、离线提示放最前：手机上横幅只显示两行（点按展开），关键信息不被截掉
+    const lead = [!navigator.onLine && t("offlineNote"), STATIC?.build && t("dataUpdated", fmtDate(STATIC.build))].filter(Boolean);
+    const txt = document.createElement("span");
+    banner.replaceChildren(txt);
+    txt.textContent = [...lead, mode === "real" ? t("bannerReal")
       : mode === "mixed" ? (sampleNames.length ? t("bannerMixedNamed", sampleNames.join(t("listSep"))) : t("bannerMixed"))
-      : t("sampleBanner");
-    if (STATIC?.build) banner.textContent += " " + t("dataUpdated", fmtDate(STATIC.build));
-    if (!navigator.onLine) banner.textContent += " " + t("offlineNote");
+      : t("sampleBanner")].join(" ");
   }
 
+  $("#sampleBanner").addEventListener("click", (e) => e.currentTarget.classList.toggle("open"));
   $("#langSel").addEventListener("change", (e) => { state.lang = e.target.value; store.set("mgd.lang", state.lang); applyLang(); route(); });
   document.addEventListener("click", (e) => {
     if (e.target.closest("[data-track=view_source]")) track("view_source");
