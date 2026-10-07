@@ -300,6 +300,30 @@
   }
 
   // ---------- 页面：首页（我的商店 → 海报封面轮播 → 今日精选 → 即将结束 → 热门搜索） ----------
+  // ---------- 安装到手机（PWA）：Chrome/Edge/Android 用系统安装弹窗；iPhone Safari 只能手动「添加到主屏幕」 ----------
+  let installEvt = null;
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; if (location.hash.slice(1) === "/" || !location.hash) showInstall(); });
+  window.addEventListener("appinstalled", () => { installEvt = null; $("#installCard")?.remove(); });
+  function showInstall() {
+    const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !/crios|fxios|edgios/i.test(navigator.userAgent);
+    if (!STATIC || standalone || store.get("mgd.installDismissed", false) || (!installEvt && !ios) || $("#installCard")) return;
+    const card = document.createElement("div");
+    card.id = "installCard";
+    card.className = "notice install row between";
+    card.innerHTML = `<span class="grow">${esc(installEvt ? t("installHint") : t("installIos"))}</span>
+      ${installEvt ? `<button class="btn small" type="button" data-inst="go">${t("installBtn")}</button>` : ""}
+      <button class="btn ghost small" type="button" data-inst="no" aria-label="${esc(t("close"))}">×</button>`;
+    main.prepend(card);
+    card.addEventListener("click", async (e) => {
+      const b = e.target.closest("[data-inst]");
+      if (!b) return;
+      if (b.dataset.inst === "go" && installEvt) { installEvt.prompt(); await installEvt.userChoice.catch(() => null); installEvt = null; }
+      else store.set("mgd.installDismissed", true);
+      card.remove();
+    });
+  }
+
   async function pageHome() {
     main.innerHTML = `<form id="homeSearch" class="searchbar" role="search">
         <input type="search" id="q" placeholder="${esc(t("searchPlaceholder"))}" aria-label="${esc(t("search"))}">
@@ -307,6 +331,7 @@
       ${regionLine()}<div id="homeBody" class="spinner">${t("loading")}</div>`;
     $("#homeSearch").addEventListener("submit", (e) => { e.preventDefault(); location.hash = "#/search?" + qs({ q: $("#q").value.trim() }); });
     bindRegion(() => route());
+    showInstall();
     const d = await api("/api/home");
     const favs = getFavs();
     const modeOf = (id) => state.meta.retailers.find((r) => r.id === id)?.offer_data;
