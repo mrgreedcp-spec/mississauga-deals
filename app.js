@@ -633,6 +633,7 @@
       <form id="addForm" class="card stack">
         ${stores.length > 1 ? `<label for="storePick">${t("chooseStore")}</label><select id="storePick">${stores.map((s) => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join("")}</select>` : ""}
         <button class="btn block" type="submit" ${o._time_status === "ended" ? "disabled" : ""}>${t("addToList")}</button>
+        <button class="btn ghost block" type="button" id="shareOffer">${t("shareOffer")}</button>
       </form>
       ${o._flyer?.official_url ? `<a class="btn secondary block" href="${esc(o._flyer.official_url)}" target="_blank" rel="noopener">${t("openSource")} ↗</a>` : ""}
       </div><div>
@@ -657,6 +658,15 @@
           <button class="btn secondary" type="submit">${t("submit")}</button>
         </form></details>`}
       </div></div>`;
+    $("#shareOffer").addEventListener("click", async () => {
+      const priceTxt = o.multi_buy ? t("multiNeed", o.multi_buy.qty, money(o.multi_buy.total))
+        : `${cur(o.price)}${o.price_basis === "per_lb" ? "/lb" : o.price_basis === "per_kg" ? "/kg" : ""}`;
+      const text = `${retailerName(o._retailer)}${t("colon")}${offerName(o)} ${priceTxt}${t("lparen")}${t("validUntil")} ${fmtDay(o.end)}${t("rparen")}`;
+      try {
+        if (navigator.share) await navigator.share({ title: offerName(o), text, url: location.href });
+        else { await navigator.clipboard.writeText(`${text}\n${location.href}`); toast(t("shareCopiedOffer")); }
+      } catch (err) { if (err?.name !== "AbortError") toast(t("error")); }
+    });
     $("#addForm").addEventListener("submit", (e) => {
       e.preventDefault();
       const sid = $("#storePick")?.value || stores[0]?.id;
