@@ -326,3 +326,15 @@ pre.code { background: var(--brand-soft); padding: 10px; border-radius: 8px; ove
 .prev.up { color: var(--warn, #9a5b00); }
 .install { gap: 8px; align-items: center; margin-bottom: 12px; }
 .empty .chips { flex-wrap: wrap; justify-content: center; margin: 8px 0 14px; }
+/* 设置页 / 好用法 */
+.chips.wrap { flex-wrap: wrap; overflow: visible; }
+.gear { color: var(--brand-ink, #fff); text-decoration: none; font-size: 1.35rem; line-height: 1; padding: 6px 8px; border-radius: 8px; margin-left: auto; }
+.gear:hover { background: rgba(255,255,255,.12); }
+.gear + .langsel { margin-left: 4px; }
+.guide { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.guide h2 { margin: 0 0 6px; font-size: 1.05rem; }
+.guide p { margin: 0 0 10px; }
+@media (min-width: 900px) { .guide { grid-template-columns: 1fr 1fr; } }
+.setup { gap: 10px; align-items: center; margin-bottom: 12px; }
+.guide .card { margin: 0; }
+.guide-link { margin: 20px 0 8px; text-align: center; }

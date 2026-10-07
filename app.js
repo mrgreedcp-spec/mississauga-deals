@@ -333,6 +333,66 @@
     dl.innerHTML = [...words].filter(Boolean).map((w) => `<option value="${esc(w)}"></option>`).join("");
   }
 
+  // ---------- 设置（本机）：地区、常去商店、常买的东西、价格偏好、安装、清空 ----------
+  async function pageSettings() {
+    const prefs = store.get("mgd.prefs", { member: false, coupon: false });
+    const favs = getFavs();
+    const rs = [...state.meta.retailers].sort((a, b) => (b.offer_data === "real") - (a.offer_data === "real") || retailerName(a).localeCompare(retailerName(b)));
+    const wants = getWants().map((w) => w.q.toLowerCase());
+    const staples = ["eggs", "rice", "milk", "tofu", "pork", "chicken", "beef", "fish", "shrimp", "bok_choy", "noodles", "dumplings", "apples", "bananas", "cooking_oil", "toilet_paper"];
+    const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    main.innerHTML = `<h1>${t("settingsTitle")}</h1><p class="small muted">${t("settingsIntro")}</p>
+      ${regionCard()}
+      <section class="card"><h2 style="margin-top:0">${t("setFavTitle")}</h2><p class="small muted">${t("setFavHint")}</p>
+        <div class="chips wrap">${rs.map((r) => `<button type="button" class="chip" data-fav="${esc(r.id)}" aria-pressed="${favs.includes(r.id)}">${esc(retailerName(r))}${r.offer_data === "real" ? " ✓" : ""}</button>`).join("")}</div>
+        <p class="small muted">${t("setFavReal")}</p></section>
+      <section class="card"><h2 style="margin-top:0">${t("setStaplesTitle")}</h2><p class="small muted">${t("setStaplesHint")}</p>
+        <div class="chips wrap">${staples.map((c) => { const n = catName(c); return `<button type="button" class="chip" data-staple="${esc(n)}" aria-pressed="${wants.includes(n.toLowerCase())}">${esc(n)}</button>`; }).join("")}</div></section>
+      <section class="card"><h2 style="margin-top:0">${t("setPrefsTitle")}</h2>
+        <label class="check"><input type="checkbox" id="prefMember" ${prefs.member ? "checked" : ""}> ${t("member")}</label>
+        <label class="check"><input type="checkbox" id="prefCoupon" ${prefs.coupon ? "checked" : ""}> ${t("coupon")}</label>
+        <p class="small muted">${t("setPrefsHint")}</p></section>
+      ${STATIC ? `<section class="card"><h2 style="margin-top:0">${t("setInstallTitle")}</h2>
+        <p class="small">${standalone ? t("installedAlready") : installEvt ? t("installHint") : ios ? t("installIos") : t("installOther")}</p>
+        ${!standalone && installEvt ? `<button class="btn" type="button" id="setInstall">${t("installBtn")}</button>` : ""}</section>` : ""}
+      <section class="card"><h2 style="margin-top:0">${t("setDataTitle")}</h2><p class="small muted">${t("setDataHint")}</p>
+        <button class="btn danger" type="button" id="clearAll">${t("clearAll")}</button></section>
+      <div class="row list-actions"><button class="btn" type="button" id="setupDone">${t("setupDone")}</button><a class="btn ghost" href="#/guide">${t("guideTitle")} ›</a></div>`;
+    bindRegion(() => { toast(t("saved")); pageSettings(); });
+    main.querySelectorAll("[data-fav]").forEach((b) => b.addEventListener("click", () => {
+      toggleFav(b.dataset.fav); b.setAttribute("aria-pressed", isFav(b.dataset.fav));
+    }));
+    main.querySelectorAll("[data-staple]").forEach((b) => b.addEventListener("click", () => {
+      const q = b.dataset.staple;
+      if (hasWant(q)) store.set(WANT_KEY, getWants().filter((w) => w.q.toLowerCase() !== q.toLowerCase()));
+      else addWant(q);
+      b.setAttribute("aria-pressed", hasWant(q));
+    }));
+    const savePrefs = () => { store.set("mgd.prefs", { member: $("#prefMember").checked, coupon: $("#prefCoupon").checked }); toast(t("saved")); };
+    $("#prefMember").addEventListener("change", savePrefs);
+    $("#prefCoupon").addEventListener("change", savePrefs);
+    $("#setInstall")?.addEventListener("click", async () => { installEvt.prompt(); await installEvt.userChoice.catch(() => null); installEvt = null; pageSettings(); });
+    $("#clearAll").addEventListener("click", () => {
+      if (!confirm(t("clearConfirm"))) return;
+      try { Object.keys(localStorage).filter((k) => k.startsWith("mgd.")).forEach((k) => localStorage.removeItem(k)); } catch { /* 隐私模式 */ }
+      state.loc = null; updateListCount(); toast(t("cleared")); pageSettings();
+    });
+    $("#setupDone").addEventListener("click", () => { store.set("mgd.setupDone", true); location.hash = "#/"; });
+  }
+
+  // ---------- 好用法（一周节奏） ----------
+  function pageGuide() {
+    const tips = [
+      ["g1", "#/settings", "g1b"], ["g2", "#/search?up=only", "g2b"], ["g3", "#/list", "g3b"],
+      ["g4", "#/search?" + qs({ q: catName("rice"), sort: "unit_price" }), "g4b"], ["g5", "#/list", "g5b"], ["g6", "#/settings", "g6b"],
+    ];
+    main.innerHTML = `<h1>${t("guideTitle")}</h1><p class="small muted">${t("guideIntro")}</p>
+      <ol class="guide">${tips.map(([k, href, btn]) => `<li class="card"><h2>${t(k + "t")}</h2><p>${t(k + "d")}</p>
+        <a class="btn secondary small" href="${href}">${t(btn)} ›</a></li>`).join("")}</ol>
+      <div class="notice small">${t("manualNote")}</div>`;
+  }
+
   async function pageHome() {
     main.innerHTML = `<form id="homeSearch" class="searchbar" role="search">
         <input type="search" id="q" list="qSuggest" autocomplete="off" placeholder="${esc(t("searchPlaceholder"))}" aria-label="${esc(t("search"))}">
@@ -340,6 +400,13 @@
       ${regionLine()}<div id="homeBody" class="spinner">${t("loading")}</div>`;
     $("#homeSearch").addEventListener("submit", (e) => { e.preventDefault(); location.hash = "#/search?" + qs({ q: $("#q").value.trim() }); });
     bindRegion(() => route());
+    if (!store.get("mgd.setupDone", false) && !getFavs().length && !state.loc) {
+      const card = document.createElement("div");
+      card.className = "notice setup row between";
+      card.innerHTML = `<span class="grow"><strong>${t("setupCardTitle")}</strong><br><span class="small">${t("setupCardText")}</span></span>
+        <a class="btn small" href="#/settings">${t("setupCardBtn")}</a>`;
+      main.prepend(card);
+    }
     showInstall();
     const d = await api("/api/home");
     const favs = getFavs();
@@ -360,6 +427,7 @@
       const w = p[state.lang] || p.en;
       return `<a class="chip" href="#/search?${qs({ q: w })}">${esc(w)}</a>`;
     }).join("")}</div>`);
+    html += `<p class="guide-link"><a href="#/guide">${t("guideLink")} ›</a> · <a href="#/settings">⚙ ${t("settingsTitle")}</a></p>`;
     $("#homeBody").outerHTML = `<div id="homeBody">${html}</div>`;
   }
 
@@ -913,6 +981,8 @@
       else if (path === "/search") await pageSearch(params);
       else if (path.startsWith("/offer/")) await pageOffer(decodeURIComponent(path.slice(7)));
       else if (path === "/list") await pageList();
+      else if (path === "/settings") await pageSettings();
+      else if (path === "/guide") pageGuide();
       else main.innerHTML = `<p class="empty">404</p>`;
       syncCarousels();
     } catch (err) {
@@ -929,6 +999,8 @@
     $("#tabbar").setAttribute("aria-label", t("mainNav"));
     $("#topnav").setAttribute("aria-label", t("mainNav"));
     $("#langSel").setAttribute("aria-label", t("language"));
+    $("#gearBtn")?.setAttribute("aria-label", t("settingsTitle"));
+    $("#gearBtn")?.setAttribute("title", t("settingsTitle"));
     const mode = state.meta?.data_mode;
     const banner = $("#sampleBanner");
     banner.hidden = !mode || mode === "none"; // 数据模式还没加载时不显示，免得先闪一下「全部是示例」
