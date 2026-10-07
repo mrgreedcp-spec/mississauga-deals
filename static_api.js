@@ -207,7 +207,6 @@
       return out;
     }
     // 一组优惠里结束最晚的那条（对应 Python 的 max(parse_end)）
-    const latest = (os) => os.reduce((a, o) => (a == null || o._end_ts > a._end_ts ? o : a), null);
     // 大多数优惠的结束时间（主海报），条数相同取较早的（对应 Python 的 _flyer_cover）
     function mainEnd(os) {
       const cnt = new Map(), first = new Map();
@@ -249,7 +248,7 @@
       upcoming.sort((a, b) => cmp(a.start || "", b.start || "") || (order[a.category] ?? 99) - (order[b.category] ?? 99) || cmp(a.name_original, b.name_original));
       const pages = [];
       for (let i = 0; i < current.length; i += B.flyer_page_size) pages.push(current.slice(i, i + B.flyer_page_size));
-      const last = latest(current);
+      const last = mainEnd(current);
       const byR = currentByRetailer(c);
       const seq = [...retailers].sort((a, b) => (byR[b.id] || []).length - (byR[a.id] || []).length || cmp(a.id, b.id))
         .map((x) => x.id).filter((id) => byR[id]);
