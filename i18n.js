@@ -1,6 +1,8 @@
 // 界面文案（中 / 英 / 法）。商品原名始终保留商家原文。
 window.I18N = {
   zh: {
+    onlyUpcoming: "只看下期预告（还没开始的优惠）", showAll: "显示全部",
+    upcomingHome: (d, n) => `下期预告（${d} 起，共 ${n} 条）`,
     shareOffer: "分享这条优惠", shareCopiedOffer: "已复制优惠和链接",
     updatingFlyer: "新一期录入中",
     tryThese: "试试这些常买的：",
@@ -111,6 +113,8 @@ window.I18N = {
       costco_warehouse: "Costco 仓库", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   en: {
+    onlyUpcoming: "Showing upcoming deals only (not started yet)", showAll: "Show all",
+    upcomingHome: (d, n) => `Coming next (from ${d}, ${n} deals)`,
     shareOffer: "Share this deal", shareCopiedOffer: "Deal and link copied",
     updatingFlyer: "New flyer coming soon",
     tryThese: "Try these staples:",
@@ -219,6 +223,8 @@ window.I18N = {
       costco_warehouse: "Costco warehouse", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   fr: {
+    onlyUpcoming: "Aubaines à venir seulement (pas encore commencées)", showAll: "Tout afficher",
+    upcomingHome: (d, n) => `À venir (dès le ${d}, ${n} aubaines)`,
     shareOffer: "Partager cette aubaine", shareCopiedOffer: "Aubaine et lien copiés",
     updatingFlyer: "Nouvelle circulaire bientôt",
     tryThese: "Essayez ces produits courants :",

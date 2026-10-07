@@ -130,7 +130,8 @@
       for (const [score, o] of C.searchOffers(offers, q, aliasIdx)) {
         const it = decorate(o, c);
         if ((it._time_status === "ended" || it._time_status === "no_end_date") && p.include_ended !== "1") continue;
-        if (it._time_status === "upcoming" && p.include_upcoming !== "1") continue;
+        if (it._time_status === "upcoming" && p.include_upcoming !== "1" && p.include_upcoming !== "only") continue;
+        if (p.include_upcoming === "only" && it._time_status !== "upcoming") continue; // 只看下期预告
         it._score = score;
         items.push(it);
       }
@@ -220,8 +221,13 @@
         .sort((a, b) => (+!!a.is_sample) - (+!!b.is_sample) || b._savings.pct - a._savings.pct).slice(0, 10);
       const ending = cur.filter((i) => i._days_left != null && i._days_left <= 1)
         .sort((a, b) => (+!!a.is_sample) - (+!!b.is_sample) || a._days_left - b._days_left).slice(0, 10);
+      // 下期预告（service.home）：已预录、7 天内开始的真实优惠，省得多的在前
+      const soon = c.nowMs + 7 * 86400000;
+      const up = published(c).filter((o) => !o.is_sample && C.timeStatus(o, c.nowMs) === "upcoming" && o._start_ts != null && o._start_ts <= soon)
+        .map((o) => decorate(o, c))
+        .sort((a, b) => (b._savings?.pct || 0) - (a._savings?.pct || 0) || cmp(a.start || "", b.start || "") || cmp(a.name_original, b.name_original));
       const popular = B.aliases.slice(0, 24).map((a) => ({ zh: a.zh[0], en: a.en[0], fr: (a.fr || a.en)[0] }));
-      return { covers, top, ending_soon: ending, popular, now: new Date(c.nowMs).toISOString() };
+      return { covers, top, ending_soon: ending, upcoming: up.slice(0, 12), upcoming_count: up.length, popular, now: new Date(c.nowMs).toISOString() };
     }
     function retailerPage(rid, p, c) {
       const r = rMap[rid];

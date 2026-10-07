@@ -352,6 +352,10 @@
     html += section(t("groceryFlyers"), carousel(d.covers.map((c) => retailerTile(c.retailer, coverSub(c))).join(""), t("groceryFlyers")), "#/flyers");
     if (d.top.length) html += section(t("topToday"), carousel(d.top.map(offerTile).join(""), t("topToday")));
     if (d.ending_soon.length) html += section(t("endingSoon"), carousel(d.ending_soon.map(offerTile).join(""), t("endingSoon")));
+    if (d.upcoming?.length) {  // 周四晚预录后出现：下一期已经录好，换期零点生效
+      const from = d.upcoming.map((o) => o.start).filter(Boolean).sort()[0];
+      html += section(t("upcomingHome", fmtDay(from), d.upcoming_count), carousel(d.upcoming.map(offerTile).join(""), t("upcomingHome", fmtDay(from), d.upcoming_count)), "#/search?up=only");
+    }
     html += section(t("popularSearches"), `<div class="chips wrap">${d.popular.map((p) => {
       const w = p[state.lang] || p.en;
       return `<a class="chip" href="#/search?${qs({ q: w })}">${esc(w)}</a>`;
@@ -573,17 +577,18 @@
     const submit = () => {
       const fd = new FormData(f);
       store.set("mgd.prefs", { member: !!fd.get("member"), coupon: !!fd.get("coupon") });
-      location.hash = "#/search?" + qs({ q: fd.get("q").trim(), sort: p.sort, retailer: fd.get("retailer"), channel: fd.get("channel"), store_ids: p.store_ids, up: fd.get("up") ? 1 : "" });
+      location.hash = "#/search?" + qs({ q: fd.get("q").trim(), sort: p.sort, retailer: fd.get("retailer"), channel: fd.get("channel"), store_ids: p.store_ids, up: fd.get("up") ? (p.up === "only" ? "only" : 1) : "" });
     };
     f.addEventListener("submit", (e) => { e.preventDefault(); submit(); });
     f.querySelectorAll("select, input[type=checkbox]").forEach((el) => el.addEventListener("change", submit));
 
     const data = await api("/api/offers?" + qs({
       q: p.q, sort: p.sort, retailer: p.retailer, channel: p.channel, store_ids: p.store_ids,
-      member: prefs.member ? 1 : "", coupon: prefs.coupon ? 1 : "", page: p.page, include_upcoming: p.up ? 1 : "", ...locParams(),
+      member: prefs.member ? 1 : "", coupon: prefs.coupon ? 1 : "", page: p.page, include_upcoming: p.up === "only" ? "only" : p.up ? 1 : "", ...locParams(),
     }));
     let html = "";
     if (p.q) html += `<div class="row between"><h1>${t("dealsFor", esc(p.q))}</h1>${wantBtn(p.q)}</div>`;
+    if (p.up === "only") html += `<div class="notice">${t("onlyUpcoming")} · <a href="#/search?${qs({ q: p.q, sort: p.sort })}">${t("showAll")}</a></div>`;
     if (p.store_ids) html += `<div class="notice">${t("onlyStore")}${t("colon")}${esc(p.store_ids)} · <a href="#/search?${qs({ q: p.q })}">${t("clear")}</a></div>`;
     if (data.retailers.length) html += section(t("storesRow"), carousel(data.retailers.map((r) => retailerTile(r)).join(""), t("storesRow")));
     if (data.categories_matched.length) html += `<p class="small muted">${t("category")}${t("colon")}${esc(data.categories_matched.map(catName).join(t("listSep")))}</p>`;
