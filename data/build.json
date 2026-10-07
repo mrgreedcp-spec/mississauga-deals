@@ -1,5 +1,5 @@
 {
- "built_at": "2026-10-06T21:07:35-04:00",
+ "built_at": "2026-10-06T21:09:09-04:00",
  "counts": {
   "real": 212,
   "sample": 38,
@@ -7,5 +7,5 @@
   "stores": 23,
   "flyers": 13
  },
- "source_commit": "7154285"
+ "source_commit": "3ef9200"
 }

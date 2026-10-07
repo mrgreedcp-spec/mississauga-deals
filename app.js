@@ -926,7 +926,7 @@
     $("#langSel").setAttribute("aria-label", t("language"));
     const mode = state.meta?.data_mode;
     const banner = $("#sampleBanner");
-    banner.hidden = mode === "none";
+    banner.hidden = !mode || mode === "none"; // 数据模式还没加载时不显示，免得先闪一下「全部是示例」
     // 混合模式点名哪些商家是示例，比笼统的「部分商家」更准确
     const sampleNames = (state.meta?.retailers || []).filter((r) => r.offer_data === "sample").map(retailerName);
     // 更新时间、离线提示放最前：手机上横幅只显示两行（点按展开），关键信息不被截掉
