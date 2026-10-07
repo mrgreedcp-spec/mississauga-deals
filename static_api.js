@@ -24,9 +24,10 @@
     // ---------- 通用 ----------
     const ctx = (nowMs) => ({ nowMs, today: C.torontoDate(nowMs) });
 
-    // service._published：某商家有未过期的真实优惠时隐藏它的示例
+    // service._published：某商家有未过期的真实优惠、或近 14 天有过（导出时算好 recent_real_retailers）时隐藏它的示例
     function published(c) {
-      const real = new Set(B.offers.filter((o) => !o.is_sample && C.timeStatus(o, c.nowMs) !== "ended").map((o) => o.retailer_id));
+      const real = new Set([...(B.recent_real_retailers || []),
+        ...B.offers.filter((o) => !o.is_sample && C.timeStatus(o, c.nowMs) !== "ended").map((o) => o.retailer_id)]);
       return B.offers.filter((o) => !(o.is_sample && real.has(o.retailer_id)));
     }
     function dataMode(c) {
