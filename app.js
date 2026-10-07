@@ -581,7 +581,10 @@
     if (p.sort === "unit_price") html += `<div class="notice small">${t("sameProductNote")}</div>`;
     html += `<div class="sec-h"><h2>${t("offersRow")}</h2><span class="small muted">${data.total} ${t("results")}</span></div>`;
     if (data.empty_message) {
-      html += `<div class="card empty"><p>${t("emptyMsg")}</p>${p.q ? `<p class="small">${t("wantEmptyHint")}</p>` : ""}<a class="btn secondary" href="#/flyers">${t("checkFlyers")}</a></div>`;
+      html += `<div class="card empty"><p>${t("emptyMsg")}</p>${p.q ? `<p class="small">${t("wantEmptyHint")}</p>` : ""}
+        <p class="small muted">${t("tryThese")}</p><div class="chips">${["eggs", "rice", "pork", "chicken", "beef", "fish", "shrimp", "noodles", "dumplings", "grapes"]
+          .map((c) => `<a class="chip" href="#/search?${qs({ q: catName(c) })}">${esc(catName(c))}</a>`).join("")}</div>
+        <a class="btn secondary" href="#/flyers">${t("checkFlyers")}</a></div>`;
     }
     if (p.sort === "unit_price") {
       // 按渠道分段：不同渠道的价格不混在一个排名里

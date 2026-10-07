@@ -325,3 +325,4 @@ pre.code { background: var(--brand-soft); padding: 10px; border-radius: 8px; ove
 .prev.down { color: var(--good, #1f7a3a); }
 .prev.up { color: var(--warn, #9a5b00); }
 .install { gap: 8px; align-items: center; margin-bottom: 12px; }
+.empty .chips { flex-wrap: wrap; justify-content: center; margin: 8px 0 14px; }
