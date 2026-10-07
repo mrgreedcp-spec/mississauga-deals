@@ -335,7 +335,7 @@
     const d = await api("/api/home");
     const favs = getFavs();
     const modeOf = (id) => state.meta.retailers.find((r) => r.id === id)?.offer_data;
-    const coverSub = (c) => `${expiryLabel(c.days_left, c.valid_to)}${c.offer_count ? " · " + t(modeOf(c.retailer.id) === "real" ? "offersCount" : "sampleOffers", c.offer_count) : ""}`;
+    const coverSub = (c) => modeOf(c.retailer.id) === "updating" ? t("updatingFlyer") : `${expiryLabel(c.days_left, c.valid_to)}${c.offer_count ? " · " + t(modeOf(c.retailer.id) === "real" ? "offersCount" : "sampleOffers", c.offer_count) : ""}`;
     const favCovers = d.covers.filter((c) => favs.includes(c.retailer.id));
     let html = section(t("myStores"), favCovers.length
       ? carousel(favCovers.map((c) => retailerTile(c.retailer, coverSub(c))).join(""), t("myStores"))

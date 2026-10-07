@@ -37,6 +37,7 @@
         if (st === "ended" || st === "no_end_date") continue;
         out[o.retailer_id] = !o.is_sample || out[o.retailer_id] === "real" ? "real" : "sample";
       }
+      for (const rid of B.recent_real_retailers || []) if (!out[rid]) out[rid] = "updating"; // 换期空档
       return out;
     }
     const withMode = (c) => { const m = dataMode(c); return retailers.map((r) => ({ ...r, offer_data: m[r.id] || "none" })); };

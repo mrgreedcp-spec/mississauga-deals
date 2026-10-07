@@ -1,6 +1,7 @@
 // 界面文案（中 / 英 / 法）。商品原名始终保留商家原文。
 window.I18N = {
   zh: {
+    updatingFlyer: "新一期录入中",
     tryThese: "试试这些常买的：",
     close: "关闭",
     installHint: "把本站安装到手机桌面，像 App 一样打开，断网也能看上次的优惠。", installBtn: "安装", installIos: "装到手机桌面：点 Safari 底部「分享」→「添加到主屏幕」。",
@@ -109,6 +110,7 @@ window.I18N = {
       costco_warehouse: "Costco 仓库", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   en: {
+    updatingFlyer: "New flyer coming soon",
     tryThese: "Try these staples:",
     close: "Close",
     installHint: "Install this site on your home screen — opens like an app and shows your last data offline.", installBtn: "Install", installIos: "Add to Home Screen: tap Share in Safari → “Add to Home Screen”.",
@@ -215,6 +217,7 @@ window.I18N = {
       costco_warehouse: "Costco warehouse", costco_ca: "Costco.ca", costco_grocery: "Costco Grocery", costco_same_day: "Costco Same-Day" },
   },
   fr: {
+    updatingFlyer: "Nouvelle circulaire bientôt",
     tryThese: "Essayez ces produits courants :",
     close: "Fermer",
     installHint: "Installez ce site sur votre écran d’accueil — il s’ouvre comme une appli et affiche vos dernières données hors ligne.", installBtn: "Installer", installIos: "Écran d’accueil : touchez Partager dans Safari → « Sur l’écran d’accueil ».",
