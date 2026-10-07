@@ -324,9 +324,18 @@
     });
   }
 
+  // 搜索框联想：当前语言的品类名 + 中文常用叫法（core.NAME_SYNONYMS）
+  function suggestList() {
+    const words = new Set((state.meta?.categories || []).map((c) => c[state.lang] || c.en));
+    if (state.lang === "zh") Object.keys(window.MGDCore?.NAME_SYNONYMS || {}).forEach((w) => words.add(w));
+    let dl = $("#qSuggest");
+    if (!dl) { dl = document.createElement("datalist"); dl.id = "qSuggest"; document.body.append(dl); }
+    dl.innerHTML = [...words].filter(Boolean).map((w) => `<option value="${esc(w)}"></option>`).join("");
+  }
+
   async function pageHome() {
     main.innerHTML = `<form id="homeSearch" class="searchbar" role="search">
-        <input type="search" id="q" placeholder="${esc(t("searchPlaceholder"))}" aria-label="${esc(t("search"))}">
+        <input type="search" id="q" list="qSuggest" autocomplete="off" placeholder="${esc(t("searchPlaceholder"))}" aria-label="${esc(t("search"))}">
         <button class="btn" type="submit">${t("search")}</button></form>
       ${regionLine()}<div id="homeBody" class="spinner">${t("loading")}</div>`;
     $("#homeSearch").addEventListener("submit", (e) => { e.preventDefault(); location.hash = "#/search?" + qs({ q: $("#q").value.trim() }); });
@@ -538,7 +547,7 @@
     if (state.loc && state.loc.mode !== "city") sorts.push(["distance", t("sortDistance")]);
     const nFilters = [p.retailer, p.channel, prefs.member, prefs.coupon, p.up].filter(Boolean).length; // 已生效的筛选数
     main.innerHTML = `<form id="sForm" class="stack" role="search">
-        <div class="searchbar"><input type="search" name="q" value="${esc(p.q || "")}" placeholder="${esc(t("searchPlaceholder"))}" aria-label="${esc(t("search"))}">
+        <div class="searchbar"><input type="search" name="q" list="qSuggest" autocomplete="off" value="${esc(p.q || "")}" placeholder="${esc(t("searchPlaceholder"))}" aria-label="${esc(t("search"))}">
           <button class="btn" type="submit">${t("search")}</button></div>
         <div class="toolrow">
           <div class="chips" role="group" aria-label="${t("sortBy")}">${sorts.map(([k, l]) =>
@@ -907,6 +916,7 @@
   }
 
   function applyLang() {
+    suggestList();
     document.documentElement.lang = { zh: "zh-CN", en: "en-CA", fr: "fr-CA" }[state.lang];
     document.title = t("appName");
     document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = t(el.dataset.i18n)));
