@@ -1,3 +1,4 @@
+[hidden] { display: none !important; }
 :root {
   --bg: #f3f6f5; --card: #ffffff; --ink: #17302b; --muted: #5b6f68; --line: #d8e3df;
   --brand: #1f6f5c; --brand-ink: #ffffff; --brand-soft: #e6f2ee;
@@ -318,5 +319,5 @@ pre.code { background: var(--brand-soft); padding: 10px; border-radius: 8px; ove
 @media (max-width: 640px) {
   .sample-banner:not(.open) { cursor: pointer; }
   .sample-banner:not(.open) > span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .sample-banner[hidden] { display: none; }
 }
+.list-actions { gap: 8px; flex-wrap: wrap; margin: 4px 0 12px; }

@@ -680,12 +680,59 @@
         <div id="wl"></div></section>
       <h2>${t("listItemsTitle")}</h2><div id="lb"></div>`;
     $("#wantForm").addEventListener("submit", (e) => { e.preventDefault(); if (addWant($("#wantQ").value)) pageList(); });
+    if (list.length || getWants().length) {
+      const bar = document.createElement("div");
+      bar.className = "row list-actions";
+      bar.innerHTML = `<button class="btn" type="button" id="shareList">${t("shareList")}</button>`
+        + `<button class="btn ghost" type="button" id="clearDone" ${list.some((i) => i.done) ? "" : "hidden"}>${t("clearDone")}</button>`;
+      main.querySelector("h1").after(bar);
+      $("#shareList").addEventListener("click", shareList);
+      $("#clearDone")?.addEventListener("click", () => { setList(getList().filter((i) => !i.done)); pageList(); });
+    }
     await renderWants();
     if (!list.length) { $("#lb").innerHTML = `<p class="empty">${t("listEmpty")}</p>`; return; }
     $("#lb").innerHTML = `<p class="spinner">${t("checking")}</p>`;
     let status = {};
     try { status = (await api("/api/offers/batch?ids=" + list.map((i) => i.offer_id).join(","))).items; } catch { /* 离线时只显示快照 */ }
     renderList(list, status);
+  }
+
+  // 门店名已经包含商家名（如 Grant's Foodmart）时不再重复
+  const storeLabel = (i) => {
+    const r = retailerName(i.retailer);
+    return i.store_name && i.store_name !== "—" && !i.store_name.toLowerCase().includes(r.toLowerCase()) ? `${r} · ${i.store_name}` : i.store_name && i.store_name !== "—" ? i.store_name : r;
+  };
+
+  // 清单转成纯文本：手机上走系统分享（微信、短信…），电脑上复制到剪贴板
+  function listText() {
+    const lines = [t("listTitle")];
+    const groups = {};
+    getList().filter((i) => !i.done).forEach((i) => (groups[i.key.split("@")[1] || "—"] ||= []).push(i));
+    for (const items of Object.values(groups)) {
+      let sum = 0, unknown = false;
+      lines.push("", `【${storeLabel(items[0])}】`);
+      for (const i of items) {
+        const s = i.snap, cost = itemCost(s, i.qty);
+        if (cost == null) unknown = true; else sum += cost;
+        const name = state.lang === "zh" ? s.name_zh || s.name_original : s.name_original;
+        lines.push(`□ ${name}${s.size && !/\d/.test(name) ? " " + s.size : ""} ×${i.qty}${cost == null ? "" : " ≈ " + cur(cost)}`);
+      }
+      lines.push(`${t("subtotal")}${t("colon")}${cur(sum)}${unknown ? " +?" : ""}`);
+    }
+    const wants = getWants().map((w) => w.q);
+    if (wants.length) lines.push("", `${t("wantsTitle")}${t("colon")}${wants.join(t("listSep"))}`);
+    lines.push("", location.href.split("#")[0]);
+    return lines.join("\n");
+  }
+  async function shareList() {
+    const text = listText();
+    try {
+      if (navigator.share) { await navigator.share({ title: t("listTitle"), text }); return; }
+      await navigator.clipboard.writeText(text);
+      toast(t("shareCopied"));
+    } catch (e) {
+      if (e?.name !== "AbortError") toast(t("error"));
+    }
   }
 
   // ---------- 想买清单（本机）：只存商品名，每次打开时按本期 + 下期预告重新搜索 ----------
@@ -760,7 +807,7 @@
           </div></div>`;
       }).join("");
       const first = items[0];
-      html += `<section><h2>${esc(retailerName(first.retailer))} · ${esc(first.store_name)}</h2>
+      html += `<section><h2>${esc(storeLabel(first))}</h2>
         <p class="small muted">${esc(first.store_address)}</p>${rows}
         <div class="card"><div class="row between"><strong>${t("subtotal")}</strong><strong>${cur(sum)}${unknown ? " +?" : ""}</strong></div>
         ${unknown ? `<p class="small" style="color:var(--warn)">${t("partlyUnknown")}</p>` : ""}
@@ -776,6 +823,7 @@
       if (act === "done") it.done = el.checked;
       const next = act === "del" ? l.filter((x) => x.key !== key) : l;
       setList(next);
+      if ($("#clearDone")) $("#clearDone").hidden = !next.some((x) => x.done);
       next.length ? renderList(next, status) : pageList();
     }));
   }
@@ -833,7 +881,7 @@
     const cb = e.target.closest(".cbtn");
     if (cb) {
       const c = cb.closest(".carousel-wrap").querySelector(".carousel");
-      c.scrollBy({ left: (cb.classList.contains("next") ? 1 : -1) * c.clientWidth * 0.8, behavior: "smooth" });
+      c.scrollBy({ left: (cb.classList.contains("next") ? 1 : -1) * c.clientWidth * 0.8, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
       setTimeout(() => syncCarousel(cb.closest(".carousel-wrap")), 600); // 兜底：个别浏览器平滑滚动结束不一定再触发 scroll
     }
     const wb = e.target.closest("[data-want]");
