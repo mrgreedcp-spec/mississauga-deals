@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f6f5c">
+<title>密西沙加超市优惠助手</title>
+<meta name="description" content="密西沙加超市每周海报优惠：大统华、Grant's 等，比价、购物清单；中文 / English / Français。">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="超市优惠">
+<link rel="stylesheet" href="style.css?v=88e76c29d2">
+<link rel="modulepreload" href="pkg/mgd_web.js?v=3e63a783b9">
+<script>
+  // wasm 和数据包一开始就并行下载（不用 <link rel=preload>：有 service worker 时 Chrome 会下载两次）
+  window.MGD_WASM = fetch("pkg/mgd_web_bg.wasm?v=b156ccb9c4");
+  // 数据包地址由 build.sh 填：本地是 data/site.json?b=指纹；部署到 /rs/ 时是 ../data/site.json（和 JS 版共用）
+  window.MGD_DATA = fetch("../data/site.json", { cache: "no-cache" })
+    .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); });
+  window.MGD_WASM.catch(() => {});
+  window.MGD_DATA.catch(() => {});
+</script>
+</head>
+<body>
+<a class="skip" href="#main" data-i18n="skipLink">跳到主要内容</a>
+<header class="topbar">
+  <a href="#/" class="brand" data-i18n="appName">密西沙加超市优惠助手</a>
+  <nav class="topnav" id="topnav" aria-label="主导航">
+    <a href="#/" data-tab="home"><span data-i18n="tabHome">首页</span></a>
+    <a href="#/stores" data-tab="stores"><span data-i18n="tabStores">门店</span></a>
+    <a href="#/search" data-tab="search"><span data-i18n="tabSearch">搜优惠</span></a>
+    <a href="#/list" data-tab="list"><span data-i18n="tabList">清单</span><span class="count listCount" hidden></span></a>
+  </nav>
+  <a href="#/settings" class="gear" id="gearBtn" aria-label="设置">⚙</a>
+  <select id="langSel" class="langsel" aria-label="语言 / Language / Langue">
+    <option value="zh">中文</option><option value="en">English</option><option value="fr">Français</option>
+  </select>
+</header>
+<div class="sample-banner" role="note" id="sampleBanner" hidden></div>
+<main id="main" tabindex="-1" aria-live="polite"><div class="spinner">…</div></main>
+<nav class="tabbar" id="tabbar" aria-label="主导航">
+  <a href="#/" data-tab="home"><span class="ic" aria-hidden="true">⌂</span><span data-i18n="tabHome">首页</span></a>
+  <a href="#/stores" data-tab="stores"><span class="ic" aria-hidden="true">⌖</span><span data-i18n="tabStores">门店</span></a>
+  <a href="#/search" data-tab="search"><span class="ic" aria-hidden="true">⌕</span><span data-i18n="tabSearch">搜优惠</span></a>
+  <a href="#/list" data-tab="list"><span class="ic" aria-hidden="true">☑</span><span data-i18n="tabList">清单</span><span class="count listCount" hidden></span></a>
+</nav>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<!-- Rust → WebAssembly：初始化时套用语言、挂事件；数据到了再渲染当前页 -->
+<script type="module">
+  import init, { load, show_error } from "./pkg/mgd_web.js?v=3e63a783b9";
+  const ISSUES = "https://github.com/mrgreedcp-spec/mississauga-deals/issues/new";
+  (async () => {
+    await init({ module_or_path: window.MGD_WASM });
+    try { load(await window.MGD_DATA, ISSUES); } catch (e) { show_error(String((e && e.message) || e)); }
+  })();
+  // 可安装、离线可看上次的数据
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
