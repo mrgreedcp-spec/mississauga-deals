@@ -1,8 +1,8 @@
 /* 离线支持：页面外壳（含 wasm）缓存优先；数据和页面网络优先、断网时用上次的缓存。
    版本号和外壳清单由 tools/build.sh 填入；每次构建换一个版本，旧缓存自动清掉。
    缓存名前缀用 mgdrs-，和 JS 版（mgd-）互不清理。 */
-const VERSION = "mgdrs-3f370861e0";
-const SHELL = ["./", "manifest.webmanifest", "icons/icon-192.png", "style.css?v=88e76c29d2", "pkg/mgd_web.js?v=3e63a783b9", "pkg/mgd_web_bg.wasm?v=81ec2c904e"];
+const VERSION = "mgdrs-8dab751e84";
+const SHELL = ["./", "manifest.webmanifest", "icons/icon-192.png", "style.css?v=88e76c29d2", "pkg/mgd_web.js?v=4d29e4a036", "pkg/mgd_web_bg.wasm?v=a5aa819b6f"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -14,14 +14,16 @@ self.addEventListener("activate", (e) => {
     .then(() => self.clients.claim()));
 });
 
+// 页面（导航请求）统一存成 "./"：带 ?now=、utm 等参数打开时不再各存一份
 const networkFirst = async (req) => {
   const cache = await caches.open(VERSION);
+  const key = req.mode === "navigate" ? "./" : req;
   try {
     const res = await fetch(req);
-    if (res.ok) cache.put(req, res.clone());
+    if (res.ok) cache.put(key, res.clone());
     return res;
   } catch (err) {
-    const hit = await cache.match(req, { ignoreSearch: true }) || (req.mode === "navigate" && await cache.match("./"));
+    const hit = await cache.match(key, { ignoreSearch: true });
     if (hit) return hit;
     throw err;
   }

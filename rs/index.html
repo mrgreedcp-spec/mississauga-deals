@@ -12,12 +12,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="超市优惠">
+<meta name="apple-mobile-web-app-title" content="超市优惠 R">
 <link rel="stylesheet" href="style.css?v=88e76c29d2">
-<link rel="modulepreload" href="pkg/mgd_web.js?v=3e63a783b9">
+<link rel="modulepreload" href="pkg/mgd_web.js?v=4d29e4a036">
 <script>
   // wasm 和数据包一开始就并行下载（不用 <link rel=preload>：有 service worker 时 Chrome 会下载两次）
-  window.MGD_WASM = fetch("pkg/mgd_web_bg.wasm?v=81ec2c904e");
+  window.MGD_WASM = fetch("pkg/mgd_web_bg.wasm?v=a5aa819b6f");
   // 数据包地址由 build.sh 填：本地是 data/site.json?b=指纹；部署到 /rs/ 时是 ../data/site.json（和 JS 版共用）
   window.MGD_DATA = fetch("../data/site.json", { cache: "no-cache" })
     .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); });
@@ -51,14 +51,32 @@
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <!-- Rust → WebAssembly：初始化时套用语言、挂事件；数据到了再渲染当前页 -->
 <script type="module">
-  import init, { load, show_error } from "./pkg/mgd_web.js?v=3e63a783b9";
+  import init, { load, show_error } from "./pkg/mgd_web.js?v=4d29e4a036";
   const ISSUES = "https://github.com/mrgreedcp-spec/mississauga-deals/issues/new";
+  // 浏览器跑不了这个 wasm（太旧）时退回 JS 版：部署到 /rs/ 时是 "../?engine=js"；本地预览为空，只显示错误。
+  // 只认「没有 WebAssembly」和「拿到的确实是 wasm 文件，却编译、链接不了」。断网、被 Wi-Fi 登录页拦截
+  // （拿到的是网页，同样编译失败）都不算，免得一次网络问题就把人送去 JS 版（接管主站后会记 7 天）。
+  // 这段不能用 ?. 等新语法：要在跑不了 wasm 的旧 Safari 上也能执行到。
+  const FALLBACK = "../?engine=js";
+  const gotWasm = () => window.MGD_WASM.then((r) => (r.headers.get("Content-Type") || "").indexOf("application/wasm") === 0, () => false);
+  const unsupported = async (e) => typeof WebAssembly !== "object" ||
+    ((e instanceof WebAssembly.CompileError || e instanceof WebAssembly.LinkError) && await gotWasm());
   (async () => {
-    await init({ module_or_path: window.MGD_WASM });
+    try {
+      await init({ module_or_path: window.MGD_WASM });
+    } catch (e) {
+      if (FALLBACK && await unsupported(e)) return location.replace(FALLBACK + location.hash);
+      document.getElementById("main").textContent = "加载失败 / Loading failed / Échec du chargement：" + ((e && e.message) || e);
+      return;
+    }
     try { load(await window.MGD_DATA, ISSUES); } catch (e) { show_error(String((e && e.message) || e)); }
   })();
   // 可安装、离线可看上次的数据
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+<script nomodule>
+  // 不支持 ES 模块的旧浏览器也跑不了 wasm：同样退回 JS 版
+  (function (f) { if (f) location.replace(f + location.hash); })("../?engine=js");
 </script>
 </body>
 </html>
