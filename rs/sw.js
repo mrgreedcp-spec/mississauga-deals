@@ -1,8 +1,8 @@
 /* 离线支持：页面外壳（含 wasm）缓存优先；数据和页面网络优先、断网时用上次的缓存。
    版本号和外壳清单由 tools/build.sh 填入；每次构建换一个版本，旧缓存自动清掉。
    缓存名前缀用 mgdrs-，和 JS 版（mgd-）互不清理。 */
-const VERSION = "mgdrs-a3da636c91";
-const SHELL = ["./", "manifest.webmanifest", "icons/icon-192.png", "style.css?v=88e76c29d2", "pkg/mgd_web.js?v=3e63a783b9", "pkg/mgd_web_bg.wasm?v=b156ccb9c4"];
+const VERSION = "mgdrs-3f370861e0";
+const SHELL = ["./", "manifest.webmanifest", "icons/icon-192.png", "style.css?v=88e76c29d2", "pkg/mgd_web.js?v=3e63a783b9", "pkg/mgd_web_bg.wasm?v=81ec2c904e"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

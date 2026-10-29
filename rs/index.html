@@ -17,7 +17,7 @@
 <link rel="modulepreload" href="pkg/mgd_web.js?v=3e63a783b9">
 <script>
   // wasm 和数据包一开始就并行下载（不用 <link rel=preload>：有 service worker 时 Chrome 会下载两次）
-  window.MGD_WASM = fetch("pkg/mgd_web_bg.wasm?v=b156ccb9c4");
+  window.MGD_WASM = fetch("pkg/mgd_web_bg.wasm?v=81ec2c904e");
   // 数据包地址由 build.sh 填：本地是 data/site.json?b=指纹；部署到 /rs/ 时是 ../data/site.json（和 JS 版共用）
   window.MGD_DATA = fetch("../data/site.json", { cache: "no-cache" })
     .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); });
