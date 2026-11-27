@@ -1,2 +1,2 @@
 /* 由 scripts/export_site.py 生成：静态模式 */
-window.MGD_STATIC = {"data": "data/site.json", "build": "2026-11-27T08:24:00-05:00", "issues": "https://github.com/mrgreedcp-spec/mississauga-deals/issues/new"};
+window.MGD_STATIC = {"data": "data/site.json", "build": "2026-11-27T10:02:40-05:00", "issues": "https://github.com/mrgreedcp-spec/mississauga-deals/issues/new"};
